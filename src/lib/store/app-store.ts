@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ModuleId = 'chat' | 'image' | 'editor' | 'video' | 'qrcode' | 'music';
+export type ModuleId = 'chat' | 'image' | 'editor' | 'video' | 'qrcode' | 'music' | 'gallery';
 
 export interface ChatMessage {
   id: string;
@@ -17,6 +17,7 @@ export interface GeneratedImage {
   model: string;
   size: string;
   style?: string;
+  creationModel?: string;
   timestamp: number;
 }
 
@@ -63,18 +64,16 @@ export interface MusicAnalysis {
   };
   similarArtists: Array<{ name: string; similarity: number }>;
   similarSongs: Array<{ title: string; artist: string; similarity: number }>;
+  lyrics?: string;
   overallConfidence: number;
 }
 
 interface AppState {
   activeModule: ModuleId;
   setActiveModule: (module: ModuleId) => void;
-  
-  // Theme
   isDark: boolean;
   setIsDark: (dark: boolean) => void;
   
-  // Chat Arena
   chatHistoryA: ChatMessage[];
   chatHistoryB: ChatMessage[];
   setChatHistoryA: (msgs: ChatMessage[]) => void;
@@ -86,20 +85,16 @@ interface AppState {
   clearChatA: () => void;
   clearChatB: () => void;
   
-  // Image Lab
   generatedImages: GeneratedImage[];
   addGeneratedImage: (img: GeneratedImage) => void;
   
-  // Image Editor
   editedImages: EditedImage[];
   addEditedImage: (img: EditedImage) => void;
   
-  // Video Studio
   videoTasks: VideoTask[];
   addVideoTask: (task: VideoTask) => void;
   updateVideoTask: (id: string, updates: Partial<VideoTask>) => void;
   
-  // QR Code
   qrCodes: QRCodeItem[];
   addQRCode: (qr: QRCodeItem) => void;
 }
@@ -107,7 +102,6 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   activeModule: 'chat',
   setActiveModule: (module) => set({ activeModule: module }),
-  
   isDark: true,
   setIsDark: (dark) => set({ isDark: dark }),
   
@@ -120,17 +114,13 @@ export const useAppStore = create<AppState>((set) => ({
   updateLastAssistantA: (content) => set((s) => {
     const msgs = [...s.chatHistoryA];
     const last = msgs[msgs.length - 1];
-    if (last?.role === 'assistant') {
-      msgs[msgs.length - 1] = { ...last, content };
-    }
+    if (last?.role === 'assistant') msgs[msgs.length - 1] = { ...last, content };
     return { chatHistoryA: msgs };
   }),
   updateLastAssistantB: (content) => set((s) => {
     const msgs = [...s.chatHistoryB];
     const last = msgs[msgs.length - 1];
-    if (last?.role === 'assistant') {
-      msgs[msgs.length - 1] = { ...last, content };
-    }
+    if (last?.role === 'assistant') msgs[msgs.length - 1] = { ...last, content };
     return { chatHistoryB: msgs };
   }),
   clearChatA: () => set({ chatHistoryA: [] }),
