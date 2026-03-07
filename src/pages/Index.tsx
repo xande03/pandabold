@@ -6,6 +6,7 @@ import { ImageEditor } from "@/components/modules/image-editor";
 import { VideoStudio } from "@/components/modules/video-studio";
 import { QRCodeGenerator } from "@/components/modules/qr-code-generator";
 import { MusicDNA } from "@/components/modules/music-dna";
+import { Gallery } from "@/components/modules/gallery";
 import { useAppStore } from "@/lib/store/app-store";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,15 +17,17 @@ const moduleComponents = {
   video: VideoStudio,
   qrcode: QRCodeGenerator,
   music: MusicDNA,
+  gallery: Gallery,
 };
 
 const moduleTitles = {
-  chat: "Chat Arena",
-  image: "Image Lab",
-  editor: "Image Editor",
-  video: "Video Studio",
-  qrcode: "QR Code Generator",
+  chat: "Chat IA",
+  image: "Laboratório de Imagem",
+  editor: "Editor de Imagem",
+  video: "Estúdio de Vídeo",
+  qrcode: "Gerador de QR Code",
   music: "Music DNA",
+  gallery: "Galeria",
 };
 
 const Index = () => {
@@ -39,14 +42,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <MainNav />
-
-      {/* Main Content */}
       <main className="pt-14 pb-16 sm:pb-4 px-4 max-w-7xl mx-auto">
         <div className="py-4">
           <h1 className="text-xl font-bold gradient-text mb-4">
             {moduleTitles[activeModule]}
           </h1>
-
           <AnimatePresence mode="wait">
             <motion.div
               key={activeModule}

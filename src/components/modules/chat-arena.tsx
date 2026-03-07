@@ -6,8 +6,6 @@ import {
   Send,
   Copy,
   RotateCcw,
-  ThumbsUp,
-  ThumbsDown,
   Filter,
   Loader2,
 } from "lucide-react";
@@ -39,7 +37,65 @@ const AI_MODELS = [
   { id: "openai/gpt-5.2", name: "GPT-5.2", provider: "OpenAI" },
 ];
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
 type ChatMode = "battle" | "individual";
+
+async function streamChat(
+  messages: Array<{ role: string; content: string }>,
+  model: string,
+  onDelta: (text: string) => void,
+  onDone: () => void,
+  onError: (msg: string) => void,
+) {
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+    },
+    body: JSON.stringify({ messages, model }),
+  });
+
+  if (!resp.ok) {
+    const data = await resp.json().catch(() => ({}));
+    onError(data.error || "Erro ao conectar com a IA");
+    return;
+  }
+
+  if (!resp.body) { onError("Sem resposta"); return; }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+
+    let nl: number;
+    while ((nl = buf.indexOf("\n")) !== -1) {
+      let line = buf.slice(0, nl);
+      buf = buf.slice(nl + 1);
+      if (line.endsWith("\r")) line = line.slice(0, -1);
+      if (line.startsWith(":") || line.trim() === "") continue;
+      if (!line.startsWith("data: ")) continue;
+      const json = line.slice(6).trim();
+      if (json === "[DONE]") { onDone(); return; }
+      try {
+        const parsed = JSON.parse(json);
+        const c = parsed.choices?.[0]?.delta?.content;
+        if (c) onDelta(c);
+      } catch {
+        buf = line + "\n" + buf;
+        break;
+      }
+    }
+  }
+  onDone();
+}
 
 export function ChatArena() {
   const [mode, setMode] = useState<ChatMode>("battle");
@@ -58,10 +114,7 @@ export function ChatArena() {
     clearChatA, clearChatB,
   } = useAppStore();
 
-  const filteredModels = providerFilter === "all"
-    ? AI_MODELS
-    : AI_MODELS.filter((m) => m.provider === providerFilter);
-
+  const filteredModels = providerFilter === "all" ? AI_MODELS : AI_MODELS.filter((m) => m.provider === providerFilter);
   const providers = [...new Set(AI_MODELS.map((m) => m.provider))];
 
   const handleSend = async (side: "A" | "B") => {
@@ -72,6 +125,8 @@ export function ChatArena() {
     const addMsg = side === "A" ? addChatMessageA : addChatMessageB;
     const setLoading = side === "A" ? setLoadingA : setLoadingB;
     const setInput = side === "A" ? setInputA : setInputB;
+    const updateFn = side === "A" ? updateLastAssistantA : updateLastAssistantB;
+    const history = side === "A" ? chatHistoryA : chatHistoryB;
 
     const userMsg = {
       id: crypto.randomUUID(),
@@ -84,7 +139,6 @@ export function ChatArena() {
     setInput("");
     setLoading(true);
 
-    // Add placeholder assistant message
     addMsg({
       id: crypto.randomUUID(),
       role: "assistant",
@@ -93,34 +147,28 @@ export function ChatArena() {
       timestamp: Date.now(),
     });
 
-    try {
-      // TODO: Connect to edge function for streaming
-      // Simulating for now
-      const updateFn = side === "A" ? updateLastAssistantA : updateLastAssistantB;
-      const modelName = AI_MODELS.find((m) => m.id === model)?.name || model;
-      
-      await new Promise((r) => setTimeout(r, 1000));
-      updateFn(`This is a simulated response from **${modelName}**. Connect to Lovable Cloud to enable real AI responses with streaming.`);
-    } catch (error) {
-      toast.error("Failed to get response");
-    } finally {
-      setLoading(false);
-    }
+    let accumulated = "";
+    const msgs = [...history, userMsg].map((m) => ({ role: m.role, content: m.content }));
+
+    await streamChat(
+      msgs,
+      model,
+      (chunk) => { accumulated += chunk; updateFn(accumulated); },
+      () => setLoading(false),
+      (err) => { toast.error(err); setLoading(false); },
+    );
   };
 
   const handleBattleSend = () => {
     if (!inputA.trim()) return;
     setInputB(inputA);
     handleSend("A");
-    // Slight delay for B
-    setTimeout(() => {
-      handleSend("B");
-    }, 100);
+    setTimeout(() => handleSend("B"), 100);
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
+    toast.success("Copiado!");
   };
 
   const renderChat = (
@@ -152,9 +200,7 @@ export function ChatArena() {
               </SelectTrigger>
               <SelectContent>
                 {filteredModels.map((m) => (
-                  <SelectItem key={m.id} value={m.id} className="text-xs">
-                    {m.name}
-                  </SelectItem>
+                  <SelectItem key={m.id} value={m.id} className="text-xs">{m.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -165,25 +211,15 @@ export function ChatArena() {
             <div className="space-y-3">
               {history.length === 0 && (
                 <div className="text-center text-muted-foreground text-sm py-12">
-                  Start a conversation...
+                  Inicie uma conversa...
                 </div>
               )}
               {history.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "flex gap-2",
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "rounded-xl px-3 py-2 text-sm max-w-[85%]",
-                      msg.role === "user"
-                        ? "btn-gradient text-white"
-                        : "bg-muted"
-                    )}
-                  >
+                <div key={msg.id} className={cn("flex gap-2", msg.role === "user" ? "justify-end" : "justify-start")}>
+                  <div className={cn(
+                    "rounded-xl px-3 py-2 text-sm max-w-[85%]",
+                    msg.role === "user" ? "btn-gradient text-white" : "bg-muted"
+                  )}>
                     <p className="whitespace-pre-wrap">{msg.content || (loading ? "..." : "")}</p>
                     {msg.role === "assistant" && msg.content && (
                       <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-border/30">
@@ -198,7 +234,7 @@ export function ChatArena() {
               {loading && (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating...
+                  Gerando...
                 </div>
               )}
             </div>
@@ -208,21 +244,13 @@ export function ChatArena() {
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message..."
+                placeholder="Digite sua mensagem..."
                 className="min-h-[40px] max-h-[100px] resize-none text-sm"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend(side);
-                  }
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(side); }
                 }}
               />
-              <Button
-                size="icon"
-                className="btn-gradient h-10 w-10 shrink-0"
-                onClick={() => handleSend(side)}
-                disabled={loading || !input.trim()}
-              >
+              <Button size="icon" className="btn-gradient h-10 w-10 shrink-0" onClick={() => handleSend(side)} disabled={loading || !input.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -234,25 +262,18 @@ export function ChatArena() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      {/* Controls */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex rounded-lg bg-muted p-1">
           <button
             onClick={() => setMode("battle")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-              mode === "battle" ? "btn-gradient shadow" : "text-muted-foreground"
-            )}
+            className={cn("flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all", mode === "battle" ? "btn-gradient shadow" : "text-muted-foreground")}
           >
             <Swords className="h-4 w-4" />
-            Battle
+            Batalha
           </button>
           <button
             onClick={() => setMode("individual")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-              mode === "individual" ? "btn-gradient shadow" : "text-muted-foreground"
-            )}
+            className={cn("flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all", mode === "individual" ? "btn-gradient shadow" : "text-muted-foreground")}
           >
             <User className="h-4 w-4" />
             Individual
@@ -262,55 +283,37 @@ export function ChatArena() {
         <div className="flex items-center gap-1.5 ml-auto">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <Select value={providerFilter} onValueChange={setProviderFilter}>
-            <SelectTrigger className="w-28 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {providers.map((p) => (
-                <SelectItem key={p} value={p}>{p}</SelectItem>
-              ))}
+              <SelectItem value="all">Todos</SelectItem>
+              {providers.map((p) => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
             </SelectContent>
           </Select>
         </div>
 
         <Button variant="ghost" size="sm" onClick={() => { clearChatA(); clearChatB(); }}>
           <RotateCcw className="h-4 w-4 mr-1" />
-          Reset
+          Limpar
         </Button>
       </div>
 
-      {/* Chat Area */}
-      <div className={cn(
-        "flex-1 min-h-0 grid gap-4",
-        mode === "battle" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 max-w-2xl mx-auto w-full"
-      )}>
+      <div className={cn("flex-1 min-h-0 grid gap-4", mode === "battle" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 max-w-2xl mx-auto w-full")}>
         {renderChat(chatHistoryA, "A", modelA, inputA, setInputA, loadingA)}
         {mode === "battle" && renderChat(chatHistoryB, "B", modelB, inputB, setInputB, loadingB)}
       </div>
 
-      {/* Battle Input */}
       {mode === "battle" && (
         <div className="flex gap-2 max-w-2xl mx-auto w-full flex-shrink-0">
           <Textarea
             value={inputA}
             onChange={(e) => setInputA(e.target.value)}
-            placeholder="Send the same prompt to both models..."
+            placeholder="Envie o mesmo prompt para ambos os modelos..."
             className="min-h-[40px] max-h-[80px] resize-none text-sm"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleBattleSend();
-              }
-            }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleBattleSend(); } }}
           />
-          <Button
-            className="btn-gradient h-10 px-4 shrink-0"
-            onClick={handleBattleSend}
-            disabled={loadingA || loadingB || !inputA.trim()}
-          >
+          <Button className="btn-gradient h-10 px-4 shrink-0" onClick={handleBattleSend} disabled={loadingA || loadingB || !inputA.trim()}>
             <Send className="h-4 w-4 mr-1" />
-            Send
+            Enviar
           </Button>
         </div>
       )}

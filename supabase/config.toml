@@ -1,0 +1,13 @@
+project_id = "hrdbdoovgvjtteeyowoi"
+
+[functions.chat]
+verify_jwt = false
+
+[functions.generate-image]
+verify_jwt = false
+
+[functions.edit-image]
+verify_jwt = false
+
+[functions.analyze-music]
+verify_jwt = false
