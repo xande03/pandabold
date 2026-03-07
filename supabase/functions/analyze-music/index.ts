@@ -1,0 +1,90 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { songInfo, youtubeUrl } = await req.json();
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const prompt = youtubeUrl
+      ? `Analise a música do YouTube: ${youtubeUrl}. ${songInfo || ""}`
+      : `Analise a seguinte música: ${songInfo}`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          {
+            role: "system",
+            content: `Você é um especialista em análise musical. Analise a música e retorne APENAS um JSON válido com a seguinte estrutura (sem markdown, sem código):
+{
+  "genres": [{"name": "string", "confidence": 0.0-1.0}],
+  "moods": [{"name": "string", "confidence": 0.0-1.0}],
+  "tempo": {"bpm": number, "confidence": 0.0-1.0},
+  "instruments": [{"name": "string", "presence": 0.0-1.0}],
+  "vocals": {"type": "string", "gender": "string", "characteristics": ["string"], "confidence": 0.0-1.0},
+  "structure": {"sections": [{"name": "string", "duration": "string", "timestamp": "string"}]},
+  "similarArtists": [{"name": "string", "similarity": 0.0-1.0}],
+  "similarSongs": [{"title": "string", "artist": "string", "similarity": 0.0-1.0}],
+  "lyrics": "letra completa da música se disponível, ou 'Letra não disponível'",
+  "overallConfidence": 0.0-1.0
+}`
+          },
+          { role: "user", content: prompt }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Limite de requisições excedido." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const t = await response.text();
+      console.error("Analyze music error:", response.status, t);
+      return new Response(JSON.stringify({ error: "Erro na análise musical" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
+    
+    // Try to parse JSON from the response
+    let analysis;
+    try {
+      // Remove potential markdown code blocks
+      const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      analysis = JSON.parse(cleaned);
+    } catch {
+      analysis = { error: "Não foi possível analisar a resposta", raw: content };
+    }
+
+    return new Response(JSON.stringify(analysis), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("analyze-music error:", e);
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
