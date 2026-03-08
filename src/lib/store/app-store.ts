@@ -108,6 +108,9 @@ interface AppState {
   qrCodes: QRCodeItem[];
   setQRCodes: (qrs: QRCodeItem[]) => void;
   addQRCode: (qr: QRCodeItem) => void;
+
+  upscaledImages: UpscaledImage[];
+  addUpscaledImage: (img: UpscaledImage) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
