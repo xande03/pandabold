@@ -2,13 +2,32 @@ import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
-const MESSAGES = [
-  "Criando sua obra-prima...",
-  "Aplicando estilo...",
-  "Processando detalhes...",
-  "Quase lá...",
-  "Finalizando...",
-];
+const MESSAGES: Record<string, string[]> = {
+  image: [
+    "Criando sua obra-prima...",
+    "Aplicando estilo...",
+    "Processando detalhes...",
+    "Quase lá...",
+    "Finalizando...",
+  ],
+  video: [
+    "Gerando frames da cena...",
+    "Construindo sequência visual...",
+    "Aplicando estilo cinematográfico...",
+    "Renderizando animação...",
+    "Montando vídeo final...",
+  ],
+  qr: [
+    "Gerando QR Code...",
+    "Aplicando design...",
+    "Finalizando...",
+  ],
+  music: [
+    "Analisando áudio...",
+    "Identificando padrões...",
+    "Processando resultado...",
+  ],
+};
 
 interface GenerationLoadingProps {
   className?: string;
