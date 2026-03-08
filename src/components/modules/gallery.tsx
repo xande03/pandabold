@@ -70,6 +70,14 @@ export function Gallery() {
       model: qr.type,
       timestamp: qr.timestamp,
     })),
+    ...upscaledImages.map((img) => ({
+      id: img.id,
+      type: "upscale" as const,
+      url: img.upscaledUrl,
+      label: img.description,
+      model: img.scale,
+      timestamp: img.timestamp,
+    })),
   ].sort((a, b) => b.timestamp - a.timestamp);
 
   const filtered = filter === "all" ? allItems : allItems.filter((i) => i.type === filter);
