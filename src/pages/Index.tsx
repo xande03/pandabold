@@ -24,6 +24,7 @@ const moduleComponents = {
   gallery: Gallery,
   summarizer: TextSummarizer,
   signature: DigitalSignature,
+  upscale: ImageUpscale,
 };
 
 const moduleTitles = {
