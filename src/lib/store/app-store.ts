@@ -155,4 +155,7 @@ export const useAppStore = create<AppState>((set) => ({
   qrCodes: [],
   setQRCodes: (qrs) => set({ qrCodes: qrs }),
   addQRCode: (qr) => set((s) => ({ qrCodes: [qr, ...s.qrCodes] })),
+
+  upscaledImages: [],
+  addUpscaledImage: (img) => set((s) => ({ upscaledImages: [img, ...s.upscaledImages] })),
 }));

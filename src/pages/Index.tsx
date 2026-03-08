@@ -37,6 +37,7 @@ const moduleTitles = {
   gallery: "Galeria",
   summarizer: "Resumidor de Texto",
   signature: "Assinatura Digital",
+  upscale: "Upscale de Imagem",
 };
 
 const Index = () => {

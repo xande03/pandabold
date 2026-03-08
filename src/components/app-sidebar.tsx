@@ -29,6 +29,7 @@ const modules: { id: ModuleId; label: string; icon: React.ElementType }[] = [
   { id: "gallery", label: "Galeria", icon: LayoutGrid },
   { id: "summarizer", label: "Resumidor IA", icon: FileText },
   { id: "signature", label: "Assinatura Digital", icon: PenTool },
+  { id: "upscale", label: "Upscale de Imagem", icon: Maximize2 },
 ];
 
 export function AppSidebar() {

@@ -123,6 +123,7 @@ export function Gallery() {
             <SelectItem value="image">Imagens ({allItems.filter((i) => i.type === "image").length})</SelectItem>
             <SelectItem value="video">Vídeos ({allItems.filter((i) => i.type === "video").length})</SelectItem>
             <SelectItem value="qrcode">QR Codes ({allItems.filter((i) => i.type === "qrcode").length})</SelectItem>
+            <SelectItem value="upscale">Upscale ({allItems.filter((i) => i.type === "upscale").length})</SelectItem>
           </SelectContent>
         </Select>
         <Badge variant="secondary" className="text-xs">
