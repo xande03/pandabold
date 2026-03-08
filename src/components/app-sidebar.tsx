@@ -72,7 +72,11 @@ export function AppSidebar() {
                         active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
+                      <Icon className={cn(
+                        "shrink-0 transition-all",
+                        collapsed ? "h-5 w-5" : "h-4 w-4",
+                        active ? "text-primary" : "text-muted-foreground"
+                      )} />
                       <span>{m.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
