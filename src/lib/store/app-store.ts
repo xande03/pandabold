@@ -49,6 +49,15 @@ export interface QRCodeItem {
   timestamp: number;
 }
 
+export interface UpscaledImage {
+  id: string;
+  originalUrl: string;
+  upscaledUrl: string;
+  scale: string;
+  description: string;
+  timestamp: number;
+}
+
 export interface MusicAnalysis {
   genres: Array<{ name: string; confidence: number }>;
   moods: Array<{ name: string; confidence: number }>;
