@@ -42,7 +42,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-border bg-background">
       <SidebarHeader className="p-3">
         <div className="flex items-center gap-2 overflow-hidden">
           <div className="pulse-glow flex h-8 w-8 shrink-0 items-center justify-center rounded-lg btn-gradient text-sm font-black">
