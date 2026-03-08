@@ -303,7 +303,9 @@ export function ImageEditor() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {editedImages.length === 0 ? (
+          {loading ? (
+            <GenerationLoading type="image" />
+          ) : editedImages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Paintbrush className="h-12 w-12 mb-3 opacity-30" />
               <p className="text-sm">Nenhuma edição ainda</p>

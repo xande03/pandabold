@@ -1,43 +1,77 @@
 
 
-# Plano de Implementação
+# OmniArena AI - Multi-Modal AI Platform
 
-## 1. Feedback visual durante processamento de imagem/vídeo
+## Overview
+A single-page AI platform with 6 modules, built with React + Vite + Tailwind CSS + shadcn/ui. Backend powered by Supabase Edge Functions calling the Lovable AI Gateway for chat and image generation.
 
-**Problema**: O `GenerationLoading` só aparece no painel lateral do Image Lab. Não há feedback visual na área principal onde o resultado aparece, nem no Video Studio.
+## Design System
+- **Theme**: Orange/red gradient primary (`#ea580c` → `#dc2626`), dark mode with deep blue background (`#0f172a`)
+- **Style**: Glassmorphism cards, gradient buttons, pulse-glow effects
+- **Font**: Geist Sans + Geist Mono
+- **Responsive**: Mobile-first with bottom navigation on mobile, top tabs on desktop
 
-**Solução**:
-- No **Image Lab**: Mostrar o `GenerationLoading` na área da galeria (painel direito) durante `loading`, substituindo o estado vazio
-- No **Video Studio**: Mostrar `GenerationLoading` com `type="video"` enquanto tasks estão processando, com animação de progresso mais rica (barra gradiente animada + mensagens dinâmicas)
-- No **Image Editor**: Mostrar loading na área de resultado durante edição
+## Layout & Navigation
+- **Fixed header** with glassmorphism effect, logo with pulse glow, module tabs, dark/light toggle
+- **Mobile bottom nav** with icon + label for each module
+- **Single page** — all 6 modules switch via tabs/state (no routing)
 
-## 2. Auto-preenchimento de prompt ao clicar em modelo de criação
+## Module 1: Chat Arena
+- Compare two AI models side-by-side (Battle mode) or chat with one (Individual mode)
+- Model selector dialog with filter by provider
+- Available models via Lovable AI Gateway: Gemini (2.5 Pro, Flash, Flash-Lite), GPT-5 variants
+- Streaming responses with token-by-token rendering
+- Vote system, copy responses, conversation history, reset
 
-**Problema**: O `handleCreationModelSelect` já preenche o prompt, mas o comportamento precisa ser mais claro — ao clicar num modelo com imagem já carregada, o prompt deve ser preenchido automaticamente com instruções específicas do modelo, pronto para gerar.
+## Module 2: Image Lab
+- Generate images from text prompts using Lovable AI's image models (Gemini Flash Image, Gemini 3 Pro Image)
+- Optional reference image upload (image-to-image)
+- Aspect ratio selector (1:1, 16:9, 9:16, 2:1, 4:3, 3:4)
+- 9 preset styles (Photorealistic, Digital Art, Anime, Cyberpunk, etc.)
+- Gallery of generated images with download, fullscreen preview, prompt copy
 
-**Solução**:
-- Melhorar os prompts de cada `CREATION_MODEL` para serem mais descritivos e específicos
-- Quando há `referenceImage` + modelo selecionado, adicionar prefixo contextual ao prompt (ex: "Transforme a imagem enviada em...")
-- Mostrar indicação visual de que o prompt foi preenchido automaticamente (toast ou highlight)
+## Module 3: Image Editor
+- Upload image via drag & drop
+- 6 edit operations: Add, Remove, Modify, Style, Enhance, Background
+- Uses Lovable AI image editing capability
+- Before/after comparison dialog
+- Output size selection
+- Gallery of edits with download
 
-## 3. Funcionamento efetivo do Estúdio de Vídeo
+## Module 4: Video Studio
+- Text-to-video prompt interface (UI only — placeholder for future video API integration)
+- Image-to-video option with upload
+- Duration, resolution, quality, and style selectors
+- Task cards with processing status and progress bars
+- Video player for completed results
+- **Note**: Actual video generation will be simulated/mocked since Lovable AI Gateway doesn't support video generation yet
 
-**Problema**: O Video Studio usa simulação local (`setInterval` com progresso fictício). Não gera vídeo real.
+## Module 5: QR Code Generator
+- 5 content types: Link, Text, Image, Music, PDF
+- File upload with preview for media types
+- QR code generation (client-side using a QR library)
+- Download as PNG, copy to clipboard
+- History of generated QR codes
 
-**Solução**: Usar o modelo de imagem `google/gemini-3-pro-image-preview` para gerar **múltiplos frames** a partir do prompt (sequência de imagens) e exibi-los como slideshow/animação. Isso cria uma experiência de "vídeo" real usando a API disponível:
-- Gerar 4-8 frames sequenciais via edge function `generate-image` com prompts incrementais (frame 1, frame 2, etc.)
-- Exibir como slideshow animado com controles de play/pause
-- Permitir download como GIF ou sequência de imagens
-- Manter a progress bar real baseada no número de frames gerados
-- Criar nova edge function `generate-video` que orquestra a geração sequencial de frames
+## Module 6: Music DNA
+- Upload audio file (MP3, WAV, etc.) or paste YouTube URL
+- AI-powered analysis via Lovable AI: genres, mood, tempo/BPM, instruments, vocals, structure, similar artists/songs
+- Visual results with confidence bars, badges, instrument grid
+- Audio player preview
 
-## Arquivos a modificar
+## Backend (Supabase Edge Functions)
+- **`chat`** — Streams responses from Lovable AI Gateway with model selection
+- **`generate-image`** — Calls Lovable AI image generation (Gemini image models)
+- **`edit-image`** — Calls Lovable AI for image editing
+- **`analyze-music`** — Sends audio metadata to Lovable AI for analysis
+- **`generate-qrcode`** — Server-side QR code generation
+- All functions include CORS headers, rate limit handling (429/402), and error responses
 
-1. **`src/components/modules/image-lab.tsx`** — Loading na galeria + toast de auto-fill
-2. **`src/components/modules/video-studio.tsx`** — Reescrever para gerar frames reais via API + loading visual
-3. **`src/components/ui/generation-loading.tsx`** — Adicionar variante `video` com mensagens específicas
-4. **`src/components/modules/image-editor.tsx`** — Loading durante edição
-5. **`supabase/functions/generate-video/index.ts`** — Nova edge function para gerar frames sequenciais
-6. **`supabase/config.toml`** — Adicionar config da nova function
-7. **`src/lib/store/app-store.ts`** — Atualizar `VideoTask` para armazenar array de frames
+## State Management
+- Zustand store for active module, chat history, generated assets, settings
+- Local component state for form inputs and UI interactions
+
+## PWA
+- `manifest.json` with app name, icons, shortcuts, theme color
+- Basic service worker for offline caching of static assets
 

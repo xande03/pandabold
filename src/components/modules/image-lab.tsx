@@ -87,7 +87,13 @@ export function ImageLab() {
     setSelectedCreationModel(modelId);
     const cm = CREATION_MODELS.find((m) => m.id === modelId);
     if (cm && cm.prompt) {
-      setPrompt(cm.prompt);
+      if (referenceImage) {
+        setPrompt(`Transforme a imagem enviada: ${cm.prompt}`);
+        toast.info(`Prompt preenchido para "${cm.name}" com imagem de referência`);
+      } else {
+        setPrompt(cm.prompt);
+        toast.info(`Prompt preenchido para "${cm.name}"`);
+      }
     }
   };
 
@@ -311,7 +317,9 @@ export function ImageLab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {generatedImages.length === 0 ? (
+          {loading ? (
+            <GenerationLoading type="image" />
+          ) : generatedImages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <ImageIcon className="h-12 w-12 mb-3 opacity-30" />
               <p className="text-sm">Nenhuma imagem gerada</p>

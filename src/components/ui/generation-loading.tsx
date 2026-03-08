@@ -2,13 +2,32 @@ import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
-const MESSAGES = [
-  "Criando sua obra-prima...",
-  "Aplicando estilo...",
-  "Processando detalhes...",
-  "Quase lá...",
-  "Finalizando...",
-];
+const MESSAGES: Record<string, string[]> = {
+  image: [
+    "Criando sua obra-prima...",
+    "Aplicando estilo...",
+    "Processando detalhes...",
+    "Quase lá...",
+    "Finalizando...",
+  ],
+  video: [
+    "Gerando frames da cena...",
+    "Construindo sequência visual...",
+    "Aplicando estilo cinematográfico...",
+    "Renderizando animação...",
+    "Montando vídeo final...",
+  ],
+  qr: [
+    "Gerando QR Code...",
+    "Aplicando design...",
+    "Finalizando...",
+  ],
+  music: [
+    "Analisando áudio...",
+    "Identificando padrões...",
+    "Processando resultado...",
+  ],
+};
 
 interface GenerationLoadingProps {
   className?: string;
@@ -17,13 +36,14 @@ interface GenerationLoadingProps {
 
 export function GenerationLoading({ className, type = "image" }: GenerationLoadingProps) {
   const [msgIndex, setMsgIndex] = useState(0);
+  const msgs = MESSAGES[type] || MESSAGES.image;
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setMsgIndex((i) => (i + 1) % MESSAGES.length);
+      setMsgIndex((i) => (i + 1) % msgs.length);
     }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [msgs.length]);
 
   return (
     <div className={cn("flex flex-col items-center justify-center gap-4 py-12", className)}>
@@ -33,7 +53,7 @@ export function GenerationLoading({ className, type = "image" }: GenerationLoadi
         </div>
         <div className="absolute -inset-2 rounded-2xl bg-primary/20 animate-ping" style={{ animationDuration: "2s" }} />
       </div>
-      <p className="text-sm text-muted-foreground animate-pulse">{MESSAGES[msgIndex]}</p>
+      <p className="text-sm text-muted-foreground animate-pulse">{msgs[msgIndex]}</p>
       <div className="flex gap-1">
         {[0, 1, 2, 3, 4].map((i) => (
           <div
