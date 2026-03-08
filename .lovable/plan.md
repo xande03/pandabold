@@ -1,77 +1,44 @@
 
 
-# OmniArena AI - Multi-Modal AI Platform
+# Plano: Seletor de tamanho/proporção no Upscale + responsividade mobile
 
-## Overview
-A single-page AI platform with 6 modules, built with React + Vite + Tailwind CSS + shadcn/ui. Backend powered by Supabase Edge Functions calling the Lovable AI Gateway for chat and image generation.
+## Mudanças em `src/components/modules/image-upscale.tsx`
 
-## Design System
-- **Theme**: Orange/red gradient primary (`#ea580c` → `#dc2626`), dark mode with deep blue background (`#0f172a`)
-- **Style**: Glassmorphism cards, gradient buttons, pulse-glow effects
-- **Font**: Geist Sans + Geist Mono
-- **Responsive**: Mobile-first with bottom navigation on mobile, top tabs on desktop
+### 1. Adicionar seletor de tamanho de saída
+Novo estado `outputSize` com opções pré-definidas de dimensões:
+- **Personalizado** (mantém proporção original)
+- **1080×1080** (Instagram quadrado)
+- **1920×1080** (Full HD / 16:9)
+- **1080×1920** (Stories / 9:16)
+- **2560×1440** (2K / 16:9)
+- **3840×2160** (4K / 16:9)
+- **1200×628** (Open Graph / Redes sociais)
 
-## Layout & Navigation
-- **Fixed header** with glassmorphism effect, logo with pulse glow, module tabs, dark/light toggle
-- **Mobile bottom nav** with icon + label for each module
-- **Single page** — all 6 modules switch via tabs/state (no routing)
+Renderizado como um `Select` ao lado do seletor de escala existente.
 
-## Module 1: Chat Arena
-- Compare two AI models side-by-side (Battle mode) or chat with one (Individual mode)
-- Model selector dialog with filter by provider
-- Available models via Lovable AI Gateway: Gemini (2.5 Pro, Flash, Flash-Lite), GPT-5 variants
-- Streaming responses with token-by-token rendering
-- Vote system, copy responses, conversation history, reset
+### 2. Adicionar seletor de proporção (aspect ratio)
+Novo estado `aspectRatio` com opções:
+- **Original** (sem corte)
+- **1:1** (Quadrado)
+- **16:9** (Widescreen)
+- **9:16** (Vertical/Stories)
+- **4:3** (Padrão)
+- **3:2** (Fotografia)
 
-## Module 2: Image Lab
-- Generate images from text prompts using Lovable AI's image models (Gemini Flash Image, Gemini 3 Pro Image)
-- Optional reference image upload (image-to-image)
-- Aspect ratio selector (1:1, 16:9, 9:16, 2:1, 4:3, 3:4)
-- 9 preset styles (Photorealistic, Digital Art, Anime, Cyberpunk, etc.)
-- Gallery of generated images with download, fullscreen preview, prompt copy
+Renderizado como badges clicáveis (mesmo padrão dos presets de descrição).
 
-## Module 3: Image Editor
-- Upload image via drag & drop
-- 6 edit operations: Add, Remove, Modify, Style, Enhance, Background
-- Uses Lovable AI image editing capability
-- Before/after comparison dialog
-- Output size selection
-- Gallery of edits with download
+### 3. Incluir no prompt da instrução
+A instrução enviada à edge function incluirá o tamanho e proporção escolhidos:
+```
+Upscale this image by ${scale}. Output size: ${outputSize}. Aspect ratio: ${aspectRatio}. ${desc}...
+```
 
-## Module 4: Video Studio
-- Text-to-video prompt interface (UI only — placeholder for future video API integration)
-- Image-to-video option with upload
-- Duration, resolution, quality, and style selectors
-- Task cards with processing status and progress bars
-- Video player for completed results
-- **Note**: Actual video generation will be simulated/mocked since Lovable AI Gateway doesn't support video generation yet
+### 4. Layout responsivo para mobile
+- Seletores de escala, tamanho e proporção em grid `grid-cols-1 sm:grid-cols-2` para empilhar no mobile
+- Badges dos presets com `flex-wrap` (já existe) e tamanho de toque adequado (`min-h-[44px]` nos badges)
+- Resultado antes/depois já é `grid-cols-1 md:grid-cols-2` (ok)
+- Upload area com padding reduzido no mobile: `p-6 sm:p-10`
+- Cards com `p-3 sm:p-4` para melhor uso de espaço no mobile
 
-## Module 5: QR Code Generator
-- 5 content types: Link, Text, Image, Music, PDF
-- File upload with preview for media types
-- QR code generation (client-side using a QR library)
-- Download as PNG, copy to clipboard
-- History of generated QR codes
-
-## Module 6: Music DNA
-- Upload audio file (MP3, WAV, etc.) or paste YouTube URL
-- AI-powered analysis via Lovable AI: genres, mood, tempo/BPM, instruments, vocals, structure, similar artists/songs
-- Visual results with confidence bars, badges, instrument grid
-- Audio player preview
-
-## Backend (Supabase Edge Functions)
-- **`chat`** — Streams responses from Lovable AI Gateway with model selection
-- **`generate-image`** — Calls Lovable AI image generation (Gemini image models)
-- **`edit-image`** — Calls Lovable AI for image editing
-- **`analyze-music`** — Sends audio metadata to Lovable AI for analysis
-- **`generate-qrcode`** — Server-side QR code generation
-- All functions include CORS headers, rate limit handling (429/402), and error responses
-
-## State Management
-- Zustand store for active module, chat history, generated assets, settings
-- Local component state for form inputs and UI interactions
-
-## PWA
-- `manifest.json` with app name, icons, shortcuts, theme color
-- Basic service worker for offline caching of static assets
+Nenhuma mudança em outros arquivos necessária.
 
