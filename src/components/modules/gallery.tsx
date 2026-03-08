@@ -97,6 +97,7 @@ export function Gallery() {
       case "image": return "Imagem";
       case "video": return "Vídeo";
       case "qrcode": return "QR Code";
+      case "upscale": return "Upscale";
       default: return type;
     }
   };
