@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   QrCode,
   Link,
@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { GenerationLoading } from "@/components/ui/generation-loading";
 import QRCodeLib from "qrcode";
+import { supabase } from "@/integrations/supabase/client";
 
 const QR_TYPES = [
   { id: "link", label: "Link", icon: Link },
@@ -45,7 +46,53 @@ export function QRCodeGenerator() {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { qrCodes, addQRCode } = useAppStore();
+  const { qrCodes, setQRCodes, addQRCode } = useAppStore();
+
+  // Load QR codes from DB and subscribe to realtime
+  useEffect(() => {
+    const loadQRCodes = async () => {
+      const { data, error } = await supabase
+        .from("qr_codes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setQRCodes(
+          data.map((row: any) => ({
+            id: row.id,
+            type: row.type,
+            content: row.content,
+            qrUrl: row.qr_url,
+            timestamp: new Date(row.created_at).getTime(),
+          }))
+        );
+      }
+    };
+
+    loadQRCodes();
+
+    const channel = supabase
+      .channel("qr_codes_realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "qr_codes" },
+        (payload) => {
+          const row = payload.new as any;
+          addQRCode({
+            id: row.id,
+            type: row.type,
+            content: row.content,
+            qrUrl: row.qr_url,
+            timestamp: new Date(row.created_at).getTime(),
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -63,13 +110,12 @@ export function QRCodeGenerator() {
 
   const handleGenerate = async () => {
     let qrContent = "";
-    
+
     if (qrType === "link" || qrType === "text") {
       if (!content.trim()) { toast.error("Insira o conteúdo"); return; }
       qrContent = content.trim();
     } else {
       if (!file) { toast.error("Envie um arquivo"); return; }
-      // For file types, generate QR with file name as placeholder
       qrContent = `Panda Bold - ${qrType}: ${file.name}`;
     }
 
@@ -83,13 +129,26 @@ export function QRCodeGenerator() {
       });
 
       setGeneratedQR(qrDataUrl);
-      addQRCode({
-        id: crypto.randomUUID(),
+
+      // Persist to DB (realtime will update the store)
+      const { error } = await supabase.from("qr_codes").insert({
         type: qrType,
         content: qrContent,
-        qrUrl: qrDataUrl,
-        timestamp: Date.now(),
+        qr_url: qrDataUrl,
       });
+
+      if (error) {
+        console.error("DB insert error:", error);
+        // Fallback to local store if DB fails
+        addQRCode({
+          id: crypto.randomUUID(),
+          type: qrType,
+          content: qrContent,
+          qrUrl: qrDataUrl,
+          timestamp: Date.now(),
+        });
+      }
+
       toast.success("QR Code gerado!");
     } catch (error) {
       toast.error("Falha na geração");

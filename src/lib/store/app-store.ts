@@ -97,6 +97,7 @@ interface AppState {
   updateVideoTask: (id: string, updates: Partial<VideoTask>) => void;
   
   qrCodes: QRCodeItem[];
+  setQRCodes: (qrs: QRCodeItem[]) => void;
   addQRCode: (qr: QRCodeItem) => void;
 }
 
@@ -140,5 +141,6 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   
   qrCodes: [],
+  setQRCodes: (qrs) => set({ qrCodes: qrs }),
   addQRCode: (qr) => set((s) => ({ qrCodes: [qr, ...s.qrCodes] })),
 }));
