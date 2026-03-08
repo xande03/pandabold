@@ -33,7 +33,7 @@ type GalleryFilter = "all" | "image" | "video" | "qrcode" | "upscale";
 export function Gallery() {
   const [filter, setFilter] = useState<GalleryFilter>("all");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { generatedImages, editedImages, videoTasks, qrCodes } = useAppStore();
+  const { generatedImages, editedImages, videoTasks, qrCodes, upscaledImages } = useAppStore();
 
   const allItems = [
     ...generatedImages.map((img) => ({
