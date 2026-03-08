@@ -87,7 +87,13 @@ export function ImageLab() {
     setSelectedCreationModel(modelId);
     const cm = CREATION_MODELS.find((m) => m.id === modelId);
     if (cm && cm.prompt) {
-      setPrompt(cm.prompt);
+      if (referenceImage) {
+        setPrompt(`Transforme a imagem enviada: ${cm.prompt}`);
+        toast.info(`Prompt preenchido para "${cm.name}" com imagem de referência`);
+      } else {
+        setPrompt(cm.prompt);
+        toast.info(`Prompt preenchido para "${cm.name}"`);
+      }
     }
   };
 
