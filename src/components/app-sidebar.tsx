@@ -1,6 +1,6 @@
 import {
   MessageSquare, ImageIcon, Paintbrush, Video, QrCode,
-  Music, LayoutGrid, FileText, PenTool,
+  Music, LayoutGrid, FileText, PenTool, Maximize2,
 } from "lucide-react";
 import { useAppStore, type ModuleId } from "@/lib/store/app-store";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -29,6 +29,7 @@ const modules: { id: ModuleId; label: string; icon: React.ElementType }[] = [
   { id: "gallery", label: "Galeria", icon: LayoutGrid },
   { id: "summarizer", label: "Resumidor IA", icon: FileText },
   { id: "signature", label: "Assinatura Digital", icon: PenTool },
+  { id: "upscale", label: "Upscale de Imagem", icon: Maximize2 },
 ];
 
 export function AppSidebar() {

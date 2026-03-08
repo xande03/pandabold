@@ -8,6 +8,7 @@ import {
   Eye,
   Calendar,
   Filter,
+  Maximize2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,12 +28,12 @@ import {
 } from "@/components/ui/dialog";
 import { useAppStore } from "@/lib/store/app-store";
 
-type GalleryFilter = "all" | "image" | "video" | "qrcode";
+type GalleryFilter = "all" | "image" | "video" | "qrcode" | "upscale";
 
 export function Gallery() {
   const [filter, setFilter] = useState<GalleryFilter>("all");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { generatedImages, editedImages, videoTasks, qrCodes } = useAppStore();
+  const { generatedImages, editedImages, videoTasks, qrCodes, upscaledImages } = useAppStore();
 
   const allItems = [
     ...generatedImages.map((img) => ({
@@ -69,6 +70,14 @@ export function Gallery() {
       model: qr.type,
       timestamp: qr.timestamp,
     })),
+    ...upscaledImages.map((img) => ({
+      id: img.id,
+      type: "upscale" as const,
+      url: img.upscaledUrl,
+      label: img.description,
+      model: img.scale,
+      timestamp: img.timestamp,
+    })),
   ].sort((a, b) => b.timestamp - a.timestamp);
 
   const filtered = filter === "all" ? allItems : allItems.filter((i) => i.type === filter);
@@ -78,6 +87,7 @@ export function Gallery() {
       case "image": return <ImageIcon className="h-3 w-3" />;
       case "video": return <Video className="h-3 w-3" />;
       case "qrcode": return <QrCode className="h-3 w-3" />;
+      case "upscale": return <Maximize2 className="h-3 w-3" />;
       default: return null;
     }
   };
@@ -87,6 +97,7 @@ export function Gallery() {
       case "image": return "Imagem";
       case "video": return "Vídeo";
       case "qrcode": return "QR Code";
+      case "upscale": return "Upscale";
       default: return type;
     }
   };
@@ -112,6 +123,7 @@ export function Gallery() {
             <SelectItem value="image">Imagens ({allItems.filter((i) => i.type === "image").length})</SelectItem>
             <SelectItem value="video">Vídeos ({allItems.filter((i) => i.type === "video").length})</SelectItem>
             <SelectItem value="qrcode">QR Codes ({allItems.filter((i) => i.type === "qrcode").length})</SelectItem>
+            <SelectItem value="upscale">Upscale ({allItems.filter((i) => i.type === "upscale").length})</SelectItem>
           </SelectContent>
         </Select>
         <Badge variant="secondary" className="text-xs">

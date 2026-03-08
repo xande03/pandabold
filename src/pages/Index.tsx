@@ -10,6 +10,7 @@ import { MusicDNA } from "@/components/modules/music-dna";
 import { Gallery } from "@/components/modules/gallery";
 import { TextSummarizer } from "@/components/modules/text-summarizer";
 import { DigitalSignature } from "@/components/modules/digital-signature";
+import { ImageUpscale } from "@/components/modules/image-upscale";
 import { useAppStore } from "@/lib/store/app-store";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,6 +24,7 @@ const moduleComponents = {
   gallery: Gallery,
   summarizer: TextSummarizer,
   signature: DigitalSignature,
+  upscale: ImageUpscale,
 };
 
 const moduleTitles = {
@@ -35,6 +37,7 @@ const moduleTitles = {
   gallery: "Galeria",
   summarizer: "Resumidor de Texto",
   signature: "Assinatura Digital",
+  upscale: "Upscale de Imagem",
 };
 
 const Index = () => {

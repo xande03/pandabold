@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ModuleId = 'chat' | 'image' | 'editor' | 'video' | 'qrcode' | 'music' | 'gallery' | 'summarizer' | 'signature';
+export type ModuleId = 'chat' | 'image' | 'editor' | 'video' | 'qrcode' | 'music' | 'gallery' | 'summarizer' | 'signature' | 'upscale';
 
 export interface ChatMessage {
   id: string;
@@ -46,6 +46,15 @@ export interface QRCodeItem {
   type: string;
   content: string;
   qrUrl: string;
+  timestamp: number;
+}
+
+export interface UpscaledImage {
+  id: string;
+  originalUrl: string;
+  upscaledUrl: string;
+  scale: string;
+  description: string;
   timestamp: number;
 }
 
@@ -99,6 +108,9 @@ interface AppState {
   qrCodes: QRCodeItem[];
   setQRCodes: (qrs: QRCodeItem[]) => void;
   addQRCode: (qr: QRCodeItem) => void;
+
+  upscaledImages: UpscaledImage[];
+  addUpscaledImage: (img: UpscaledImage) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -143,4 +155,7 @@ export const useAppStore = create<AppState>((set) => ({
   qrCodes: [],
   setQRCodes: (qrs) => set({ qrCodes: qrs }),
   addQRCode: (qr) => set((s) => ({ qrCodes: [qr, ...s.qrCodes] })),
+
+  upscaledImages: [],
+  addUpscaledImage: (img) => set((s) => ({ upscaledImages: [img, ...s.upscaledImages] })),
 }));
