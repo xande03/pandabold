@@ -1,6 +1,6 @@
 import {
   MessageSquare, ImageIcon, Paintbrush, Video, QrCode,
-  Music, LayoutGrid, FileText, PenTool, PanelLeftClose, PanelLeft,
+  Music, LayoutGrid, FileText, PenTool,
 } from "lucide-react";
 import { useAppStore, type ModuleId } from "@/lib/store/app-store";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -18,7 +18,6 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 const modules: { id: ModuleId; label: string; icon: React.ElementType }[] = [
   { id: "chat", label: "Chat IA", icon: MessageSquare },
