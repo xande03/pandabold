@@ -66,6 +66,7 @@ const CREATION_MODELS = [
   { id: "hq", name: "HQ", icon: BookOpen, prompt: "Transforme esta imagem em estilo de história em quadrinhos (HQ/comic book), com traços fortes, sombreamento dramático e cores intensas." },
   { id: "poster", name: "Poster", icon: Frame, prompt: "Crie um poster artístico e impactante a partir desta imagem, com composição cinematográfica, tipografia integrada e design profissional." },
   { id: "sticker", name: "Adesivo", icon: Sticker, prompt: "Transforme esta imagem em um adesivo/sticker fofo e estilizado, com contorno branco, fundo transparente e design simplificado." },
+  { id: "lego", name: "LEGO", icon: Frame, prompt: "Transforme esta imagem em uma cena feita inteiramente de peças LEGO, com personagens e cenário construídos em blocos LEGO coloridos, mantendo o estilo icônico dos brinquedos LEGO com texturas plásticas e encaixes visíveis." },
   { id: "free", name: "Modo Livre", icon: Brush, prompt: "" },
   { id: "avatar", name: "Avatar", icon: User, prompt: "Crie um avatar estilizado do rosto da pessoa nesta imagem, com estilo artístico digital, cores vibrantes e detalhes profissionais. Foque apenas no rosto." },
 ];
