@@ -1,77 +1,66 @@
 
 
-# OmniArena AI - Multi-Modal AI Platform
+# Plano: Correções e persistência de QR Codes no banco de dados
 
-## Overview
-A single-page AI platform with 6 modules, built with React + Vite + Tailwind CSS + shadcn/ui. Backend powered by Supabase Edge Functions calling the Lovable AI Gateway for chat and image generation.
+## Problemas identificados
 
-## Design System
-- **Theme**: Orange/red gradient primary (`#ea580c` → `#dc2626`), dark mode with deep blue background (`#0f172a`)
-- **Style**: Glassmorphism cards, gradient buttons, pulse-glow effects
-- **Font**: Geist Sans + Geist Mono
-- **Responsive**: Mobile-first with bottom navigation on mobile, top tabs on desktop
+1. **`summarize-text` não está registrada no `config.toml`** — a função existe e funciona quando chamada diretamente, mas falta a entrada `[functions.summarize-text]` no config.toml. Isso pode causar problemas de deploy.
 
-## Layout & Navigation
-- **Fixed header** with glassmorphism effect, logo with pulse glow, module tabs, dark/light toggle
-- **Mobile bottom nav** with icon + label for each module
-- **Single page** — all 6 modules switch via tabs/state (no routing)
+2. **Título "Estúdio de Vídeo" desatualizado no `Index.tsx`** — a sidebar já mostra "Frames de Vídeo" mas o título no header ainda diz "Estúdio de Vídeo".
 
-## Module 1: Chat Arena
-- Compare two AI models side-by-side (Battle mode) or chat with one (Individual mode)
-- Model selector dialog with filter by provider
-- Available models via Lovable AI Gateway: Gemini (2.5 Pro, Flash, Flash-Lite), GPT-5 variants
-- Streaming responses with token-by-token rendering
-- Vote system, copy responses, conversation history, reset
+3. **QR Codes só existem em memória (Zustand)** — os QR codes gerados se perdem ao recarregar a página. O usuário quer persistência no banco de dados com acesso livre e simultâneo para múltiplos usuários.
 
-## Module 2: Image Lab
-- Generate images from text prompts using Lovable AI's image models (Gemini Flash Image, Gemini 3 Pro Image)
-- Optional reference image upload (image-to-image)
-- Aspect ratio selector (1:1, 16:9, 9:16, 2:1, 4:3, 3:4)
-- 9 preset styles (Photorealistic, Digital Art, Anime, Cyberpunk, etc.)
-- Gallery of generated images with download, fullscreen preview, prompt copy
+4. **Music DNA — redirecionamento yout.com** — já está funcionando corretamente (função `getYoutComUrl` com `window.open`).
 
-## Module 3: Image Editor
-- Upload image via drag & drop
-- 6 edit operations: Add, Remove, Modify, Style, Enhance, Background
-- Uses Lovable AI image editing capability
-- Before/after comparison dialog
-- Output size selection
-- Gallery of edits with download
+5. **Demais ferramentas (Chat, Image Lab, Editor, Video, Summarizer, Signature)** — todas testadas e funcionando via edge functions.
 
-## Module 4: Video Studio
-- Text-to-video prompt interface (UI only — placeholder for future video API integration)
-- Image-to-video option with upload
-- Duration, resolution, quality, and style selectors
-- Task cards with processing status and progress bars
-- Video player for completed results
-- **Note**: Actual video generation will be simulated/mocked since Lovable AI Gateway doesn't support video generation yet
+## Mudanças
 
-## Module 5: QR Code Generator
-- 5 content types: Link, Text, Image, Music, PDF
-- File upload with preview for media types
-- QR code generation (client-side using a QR library)
-- Download as PNG, copy to clipboard
-- History of generated QR codes
+### 1. `supabase/config.toml` — Adicionar summarize-text
+```toml
+[functions.summarize-text]
+verify_jwt = false
+```
 
-## Module 6: Music DNA
-- Upload audio file (MP3, WAV, etc.) or paste YouTube URL
-- AI-powered analysis via Lovable AI: genres, mood, tempo/BPM, instruments, vocals, structure, similar artists/songs
-- Visual results with confidence bars, badges, instrument grid
-- Audio player preview
+### 2. `src/pages/Index.tsx` — Corrigir título do vídeo
+Alterar `video: "Estúdio de Vídeo"` → `video: "Frames de Vídeo"`.
 
-## Backend (Supabase Edge Functions)
-- **`chat`** — Streams responses from Lovable AI Gateway with model selection
-- **`generate-image`** — Calls Lovable AI image generation (Gemini image models)
-- **`edit-image`** — Calls Lovable AI for image editing
-- **`analyze-music`** — Sends audio metadata to Lovable AI for analysis
-- **`generate-qrcode`** — Server-side QR code generation
-- All functions include CORS headers, rate limit handling (429/402), and error responses
+### 3. Criar tabela `qr_codes` no banco de dados (migration)
+```sql
+CREATE TABLE public.qr_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type TEXT NOT NULL,
+  content TEXT NOT NULL,
+  qr_url TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-## State Management
-- Zustand store for active module, chat history, generated assets, settings
-- Local component state for form inputs and UI interactions
+ALTER TABLE public.qr_codes ENABLE ROW LEVEL SECURITY;
 
-## PWA
-- `manifest.json` with app name, icons, shortcuts, theme color
-- Basic service worker for offline caching of static assets
+-- Acesso livre para todos (sem autenticação necessária)
+CREATE POLICY "Anyone can read qr_codes" ON public.qr_codes FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert qr_codes" ON public.qr_codes FOR INSERT WITH CHECK (true);
+
+-- Habilitar realtime para acesso simultâneo
+ALTER PUBLICATION supabase_realtime ADD TABLE public.qr_codes;
+```
+
+### 4. `src/components/modules/qr-code-generator.tsx` — Persistir no banco + carregar em tempo real
+- Importar `supabase` client
+- No `useEffect` inicial, carregar QR codes do banco e inscrever-se no canal realtime para receber novos QR codes de outros usuários em tempo real
+- Na geração, fazer `INSERT` na tabela `qr_codes` além de salvar no Zustand
+- Exibir QR codes do banco (combinados com os locais ou substituindo-os)
+
+### 5. `src/lib/store/app-store.ts` — Adicionar setter para qrCodes
+- Adicionar `setQRCodes` para substituir a lista inteira quando carregada do banco
+
+## Arquivos modificados
+
+| Arquivo | Mudança |
+|---|---|
+| `supabase/config.toml` | Adicionar `summarize-text` |
+| `src/pages/Index.tsx` | Corrigir título vídeo |
+| Migration SQL | Criar tabela `qr_codes` com RLS pública e realtime |
+| `src/components/modules/qr-code-generator.tsx` | Persistir e carregar do banco com realtime |
+| `src/lib/store/app-store.ts` | Adicionar `setQRCodes` |
 
