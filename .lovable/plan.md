@@ -1,45 +1,77 @@
 
 
-# Plano: Ícones PWA profissionais, Sidebar com toggle, e Resumidor IA melhorado
+# OmniArena AI - Multi-Modal AI Platform
 
-## 1. Ícones PWA Profissionais
-Gerar novos ícones `panda-icon-192.png` e `panda-icon-512.png` com design mais profissional e minimalista -- um panda estilizado com linhas limpas, sem cara infantil. Usar um SVG inline no código para gerar via canvas e exportar como PNG, ou criar SVGs profissionais diretamente.
+## Overview
+A single-page AI platform with 6 modules, built with React + Vite + Tailwind CSS + shadcn/ui. Backend powered by Supabase Edge Functions calling the Lovable AI Gateway for chat and image generation.
 
-**Abordagem**: Criar ícones usando SVG com design geométrico/minimalista do panda em cores laranja/preto que combinem com o tema do app. Converter para PNG nas duas resoluções.
+## Design System
+- **Theme**: Orange/red gradient primary (`#ea580c` → `#dc2626`), dark mode with deep blue background (`#0f172a`)
+- **Style**: Glassmorphism cards, gradient buttons, pulse-glow effects
+- **Font**: Geist Sans + Geist Mono
+- **Responsive**: Mobile-first with bottom navigation on mobile, top tabs on desktop
 
-## 2. Sidebar -- Toggle maximizar/minimizar + cores do tema
+## Layout & Navigation
+- **Fixed header** with glassmorphism effect, logo with pulse glow, module tabs, dark/light toggle
+- **Mobile bottom nav** with icon + label for each module
+- **Single page** — all 6 modules switch via tabs/state (no routing)
 
-**`src/components/app-sidebar.tsx`**:
-- Adicionar botão de toggle (ícone `PanelLeftClose`/`PanelLeft`) no footer da sidebar para colapsar/expandir via `toggleSidebar()`
-- As cores já usam variáveis CSS do tema (`--sidebar-*`), mas garantir que os itens ativos e hover respeitem corretamente dark/light mode
-- Remover estilos hardcoded e usar apenas variáveis CSS do sidebar
+## Module 1: Chat Arena
+- Compare two AI models side-by-side (Battle mode) or chat with one (Individual mode)
+- Model selector dialog with filter by provider
+- Available models via Lovable AI Gateway: Gemini (2.5 Pro, Flash, Flash-Lite), GPT-5 variants
+- Streaming responses with token-by-token rendering
+- Vote system, copy responses, conversation history, reset
 
-**`src/pages/Index.tsx`**:
-- O `SidebarTrigger` no header já existe -- manter como alternativa mobile
+## Module 2: Image Lab
+- Generate images from text prompts using Lovable AI's image models (Gemini Flash Image, Gemini 3 Pro Image)
+- Optional reference image upload (image-to-image)
+- Aspect ratio selector (1:1, 16:9, 9:16, 2:1, 4:3, 3:4)
+- 9 preset styles (Photorealistic, Digital Art, Anime, Cyberpunk, etc.)
+- Gallery of generated images with download, fullscreen preview, prompt copy
 
-## 3. Resumidor IA -- Prompts especializados por modo
+## Module 3: Image Editor
+- Upload image via drag & drop
+- 6 edit operations: Add, Remove, Modify, Style, Enhance, Background
+- Uses Lovable AI image editing capability
+- Before/after comparison dialog
+- Output size selection
+- Gallery of edits with download
 
-**`supabase/functions/summarize-text/index.ts`** -- Reescrever os prompts do sistema:
+## Module 4: Video Studio
+- Text-to-video prompt interface (UI only — placeholder for future video API integration)
+- Image-to-video option with upload
+- Duration, resolution, quality, and style selectors
+- Task cards with processing status and progress bars
+- Video player for completed results
+- **Note**: Actual video generation will be simulated/mocked since Lovable AI Gateway doesn't support video generation yet
 
-- **Resumo**: Prompt detalhado pedindo texto contínuo com parágrafos bem estruturados, descrevendo detalhes, aspectos relevantes, contexto e informações pertinentes. Sem bullet points, apenas texto corrido dividido em parágrafos.
+## Module 5: QR Code Generator
+- 5 content types: Link, Text, Image, Music, PDF
+- File upload with preview for media types
+- QR code generation (client-side using a QR library)
+- Download as PNG, copy to clipboard
+- History of generated QR codes
 
-- **Pontos-chave**: Prompt pedindo tópicos com **título em negrito** seguido de descrição resumida, organizados por categorias. Formato: `**Título do Tópico** - Descrição resumida do ponto.` Agrupados por categoria quando aplicável.
+## Module 6: Music DNA
+- Upload audio file (MP3, WAV, etc.) or paste YouTube URL
+- AI-powered analysis via Lovable AI: genres, mood, tempo/BPM, instruments, vocals, structure, similar artists/songs
+- Visual results with confidence bars, badges, instrument grid
+- Audio player preview
 
-- **Flashcards**: Prompt pedindo cards no formato estruturado `Pergunta: ... | Resposta: ...` com perguntas e respostas coerentes, cobrindo todo o conteúdo do texto/PDF.
+## Backend (Supabase Edge Functions)
+- **`chat`** — Streams responses from Lovable AI Gateway with model selection
+- **`generate-image`** — Calls Lovable AI image generation (Gemini image models)
+- **`edit-image`** — Calls Lovable AI for image editing
+- **`analyze-music`** — Sends audio metadata to Lovable AI for analysis
+- **`generate-qrcode`** — Server-side QR code generation
+- All functions include CORS headers, rate limit handling (429/402), and error responses
 
-**`src/components/modules/text-summarizer.tsx`** -- Melhorar renderização do resultado:
+## State Management
+- Zustand store for active module, chat history, generated assets, settings
+- Local component state for form inputs and UI interactions
 
-- **Resumo**: Renderizar como texto corrido com `whitespace-pre-wrap` (já existe)
-- **Pontos-chave**: Parsear os tópicos e renderizar com ícones/badges por categoria
-- **Flashcards**: Renderizar como cards flip (frente: pergunta, verso: resposta) usando estado local para virar cada card. Grid responsivo de cards.
-
-## Arquivos a modificar
-
-| Arquivo | Mudança |
-|---|---|
-| `public/panda-icon-192.png` | Substituir por ícone profissional |
-| `public/panda-icon-512.png` | Substituir por ícone profissional |
-| `src/components/app-sidebar.tsx` | Adicionar botão toggle, ajustar cores tema |
-| `supabase/functions/summarize-text/index.ts` | Reescrever prompts para cada modo |
-| `src/components/modules/text-summarizer.tsx` | Renderização específica por modo (cards flip para flashcards, tópicos categorizados para pontos-chave) |
+## PWA
+- `manifest.json` with app name, icons, shortcuts, theme color
+- Basic service worker for offline caching of static assets
 
