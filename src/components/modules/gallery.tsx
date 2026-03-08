@@ -87,6 +87,7 @@ export function Gallery() {
       case "image": return <ImageIcon className="h-3 w-3" />;
       case "video": return <Video className="h-3 w-3" />;
       case "qrcode": return <QrCode className="h-3 w-3" />;
+      case "upscale": return <Maximize2 className="h-3 w-3" />;
       default: return null;
     }
   };
