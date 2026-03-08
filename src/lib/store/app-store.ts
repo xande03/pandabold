@@ -97,6 +97,7 @@ interface AppState {
   updateVideoTask: (id: string, updates: Partial<VideoTask>) => void;
   
   qrCodes: QRCodeItem[];
+  setQRCodes: (qrs: QRCodeItem[]) => void;
   addQRCode: (qr: QRCodeItem) => void;
 }
 
