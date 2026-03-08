@@ -36,6 +36,7 @@ export interface VideoTask {
   model: string;
   status: 'processing' | 'success' | 'fail';
   progress: number;
+  frames: string[];
   videoUrl?: string;
   timestamp: number;
 }

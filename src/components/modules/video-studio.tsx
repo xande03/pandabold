@@ -1,13 +1,14 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Video,
   Play,
-  Upload,
-  X,
-  Loader2,
+  Pause,
   Download,
   Clock,
   Clapperboard,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,41 +26,83 @@ import { useAppStore } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { GenerationLoading } from "@/components/ui/generation-loading";
-
-const VIDEO_MODELS = [
-  { id: "runway-gen3-turbo", name: "Runway Gen3 Turbo", tier: "Premium" },
-  { id: "luma-dream-machine", name: "Luma Dream Machine", tier: "Premium" },
-  { id: "kling-v1-5", name: "Kling v1.5", tier: "Premium" },
-  { id: "stable-video-diffusion", name: "SVD", tier: "Grátis" },
-  { id: "cogvideox-5b", name: "CogVideoX 5B", tier: "Grátis" },
-];
-
-const DURATIONS = [
-  { value: "4", label: "4s Rápido" },
-  { value: "5", label: "5s Padrão" },
-  { value: "6", label: "6s Estendido" },
-  { value: "10", label: "10s Longo" },
-];
-
-const RESOLUTIONS = [
-  { id: "1024x1024", label: "1:1" },
-  { id: "1344x768", label: "16:9" },
-  { id: "768x1344", label: "9:16" },
-  { id: "1920x1080", label: "1080p" },
-  { id: "1280x720", label: "720p" },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 const STYLES = [
   "Realista", "Cinematográfico", "Anime", "Pixar 3D", "Cyberpunk", "Fantasia",
   "Câmera Lenta", "Timelapse", "Film Noir", "Vintage", "Onírico", "Épico",
 ];
 
+const FRAME_COUNTS = [
+  { value: "4", label: "4 frames" },
+  { value: "6", label: "6 frames" },
+  { value: "8", label: "8 frames" },
+];
+
+const RESOLUTIONS = [
+  { id: "1024x1024", label: "1:1" },
+  { id: "1344x768", label: "16:9" },
+  { id: "768x1344", label: "9:16" },
+];
+
+function FramePlayer({ frames }: { frames: string[] }) {
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (playing) {
+      intervalRef.current = setInterval(() => {
+        setCurrentFrame((f) => (f + 1) % frames.length);
+      }, 500);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [playing, frames.length]);
+
+  return (
+    <div className="space-y-2">
+      <div className="relative rounded-lg overflow-hidden bg-muted aspect-video">
+        <img
+          src={frames[currentFrame]}
+          alt={`Frame ${currentFrame + 1}`}
+          className="w-full h-full object-cover transition-opacity duration-200"
+        />
+        <div className="absolute bottom-2 right-2">
+          <Badge variant="secondary" className="text-[10px]">
+            {currentFrame + 1}/{frames.length}
+          </Badge>
+        </div>
+      </div>
+      <div className="flex items-center justify-center gap-2">
+        <Button
+          variant="ghost" size="icon" className="h-7 w-7"
+          onClick={() => setCurrentFrame((f) => (f - 1 + frames.length) % frames.length)}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost" size="icon" className="h-8 w-8 btn-gradient rounded-full"
+          onClick={() => setPlaying(!playing)}
+        >
+          {playing ? <Pause className="h-4 w-4 text-white" /> : <Play className="h-4 w-4 text-white" />}
+        </Button>
+        <Button
+          variant="ghost" size="icon" className="h-7 w-7"
+          onClick={() => setCurrentFrame((f) => (f + 1) % frames.length)}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function VideoStudio() {
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState(VIDEO_MODELS[0].id);
-  const [duration, setDuration] = useState("5");
+  const [frameCount, setFrameCount] = useState("6");
   const [resolution, setResolution] = useState("1344x768");
-  const [quality, setQuality] = useState<"speed" | "quality">("quality");
   const [selectedStyle, setSelectedStyle] = useState("Cinematográfico");
   const [loading, setLoading] = useState(false);
 
@@ -73,26 +116,60 @@ export function VideoStudio() {
     addVideoTask({
       id: taskId,
       prompt: prompt.trim(),
-      model,
+      model: "gemini-3-pro-image",
       status: "processing",
       progress: 0,
+      frames: [],
       timestamp: Date.now(),
     });
 
-    let prog = 0;
-    const interval = setInterval(() => {
-      prog += Math.random() * 10;
-      if (prog >= 100) {
-        clearInterval(interval);
-        updateVideoTask(taskId, { status: "success", progress: 100 });
-        toast.success("Vídeo gerado! (simulação)");
-      } else {
-        updateVideoTask(taskId, { progress: Math.min(prog, 95) });
-      }
-    }, 1000);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-video", {
+        body: {
+          prompt: prompt.trim(),
+          style: selectedStyle,
+          frameCount: parseInt(frameCount),
+          resolution,
+        },
+      });
 
-    setLoading(false);
-    setPrompt("");
+      if (error) throw error;
+      if (data?.error) {
+        // Even if error, we might have partial frames
+        if (data.frames?.length > 0) {
+          updateVideoTask(taskId, { status: "success", progress: 100, frames: data.frames });
+          toast.warning(`Geração parcial: ${data.frames.length} frames. ${data.error}`);
+        } else {
+          updateVideoTask(taskId, { status: "fail", progress: 0 });
+          toast.error(data.error);
+        }
+        return;
+      }
+
+      if (data?.frames?.length > 0) {
+        updateVideoTask(taskId, { status: "success", progress: 100, frames: data.frames });
+        toast.success(`Vídeo gerado com ${data.frames.length} frames!`);
+      } else {
+        updateVideoTask(taskId, { status: "fail", progress: 0 });
+        toast.error("Nenhum frame gerado");
+      }
+    } catch (error: any) {
+      updateVideoTask(taskId, { status: "fail", progress: 0 });
+      toast.error(error.message || "Falha na geração");
+    } finally {
+      setLoading(false);
+      setPrompt("");
+    }
+  };
+
+  const handleDownloadFrames = (frames: string[]) => {
+    frames.forEach((frame, i) => {
+      const a = document.createElement("a");
+      a.href = frame;
+      a.download = `video-frame-${i + 1}.png`;
+      a.click();
+    });
+    toast.success("Frames baixados!");
   };
 
   return (
@@ -107,33 +184,16 @@ export function VideoStudio() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">Prompt</label>
-            <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Descreva o vídeo que deseja criar..." className="min-h-[80px] text-sm resize-none" />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Modelo</label>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {VIDEO_MODELS.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    <div className="flex items-center gap-2">
-                      {m.name}
-                      <Badge variant="outline" className="text-[10px] h-4">{m.tier}</Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Descreva a cena do vídeo..." className="min-h-[80px] text-sm resize-none" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Duração</label>
-              <Select value={duration} onValueChange={setDuration}>
+              <label className="text-xs font-medium text-muted-foreground">Frames</label>
+              <Select value={frameCount} onValueChange={setFrameCount}>
                 <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {DURATIONS.map((d) => (<SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>))}
+                  {FRAME_COUNTS.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
@@ -149,20 +209,6 @@ export function VideoStudio() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Qualidade</label>
-            <div className="flex rounded-lg bg-muted p-1">
-              {([
-                { id: "speed" as const, label: "Velocidade" },
-                { id: "quality" as const, label: "Qualidade" },
-              ]).map((q) => (
-                <button key={q.id} onClick={() => setQuality(q.id)} className={cn("flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all", quality === q.id ? "btn-gradient shadow" : "text-muted-foreground")}>
-                  {q.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">Estilo</label>
             <div className="flex flex-wrap gap-1">
               {STYLES.map((s) => (
@@ -174,9 +220,13 @@ export function VideoStudio() {
           </div>
 
           <Button className="w-full btn-gradient" onClick={handleGenerate} disabled={loading || !prompt.trim()}>
-            <Video className="h-4 w-4 mr-1" />
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Video className="h-4 w-4 mr-1" />}
             Gerar Vídeo
           </Button>
+
+          <p className="text-[10px] text-muted-foreground text-center">
+            Gera uma sequência de frames animados via IA
+          </p>
         </CardContent>
       </Card>
 
@@ -184,15 +234,17 @@ export function VideoStudio() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Video className="h-4 w-4 text-primary" />
-            Tarefas
+            Vídeos
             {videoTasks.length > 0 && <Badge variant="secondary" className="text-[10px]">{videoTasks.length}</Badge>}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {videoTasks.length === 0 ? (
+          {loading && videoTasks.some((t) => t.status === "processing") ? (
+            <GenerationLoading type="video" />
+          ) : videoTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Video className="h-12 w-12 mb-3 opacity-30" />
-              <p className="text-sm">Nenhuma tarefa de vídeo</p>
+              <p className="text-sm">Nenhum vídeo gerado</p>
               <p className="text-xs mt-1">Descreva uma cena e clique em Gerar</p>
             </div>
           ) : (
@@ -207,12 +259,20 @@ export function VideoStudio() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                      <Clock className="h-3 w-3" />{task.model}
+                      <Clock className="h-3 w-3" />
+                      {task.frames.length > 0 ? `${task.frames.length} frames` : task.model}
                     </div>
                     {task.status === "processing" && <Progress value={task.progress} className="h-1.5" />}
-                    {task.status === "success" && (
-                      <div className="mt-2 rounded-lg bg-muted aspect-video flex items-center justify-center">
-                        <Play className="h-8 w-8 text-muted-foreground" />
+                    {task.status === "success" && task.frames.length > 0 && (
+                      <div className="mt-2">
+                        <FramePlayer frames={task.frames} />
+                        <Button
+                          variant="outline" size="sm" className="w-full mt-2 text-xs"
+                          onClick={() => handleDownloadFrames(task.frames)}
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          Baixar Frames
+                        </Button>
                       </div>
                     )}
                   </CardContent>
