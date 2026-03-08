@@ -33,7 +33,7 @@ const modules: { id: ModuleId; label: string; icon: React.ElementType }[] = [
 
 export function AppSidebar() {
   const { activeModule, setActiveModule } = useAppStore();
-  const { state, setOpenMobile, toggleSidebar } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
   const handleSelect = (id: ModuleId) => {
