@@ -23,7 +23,7 @@ const modules: { id: ModuleId; label: string; icon: React.ElementType }[] = [
   { id: "chat", label: "Chat IA", icon: MessageSquare },
   { id: "image", label: "Lab de Imagem", icon: ImageIcon },
   { id: "editor", label: "Editor de Imagem", icon: Paintbrush },
-  { id: "video", label: "Estúdio de Vídeo", icon: Video },
+  { id: "video", label: "Frames de Vídeo", icon: Video },
   { id: "qrcode", label: "QR Code", icon: QrCode },
   { id: "music", label: "Music DNA", icon: Music },
   { id: "gallery", label: "Galeria", icon: LayoutGrid },
