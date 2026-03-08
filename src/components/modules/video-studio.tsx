@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Video,
   Play,
@@ -9,12 +9,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Film,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -45,24 +46,32 @@ const RESOLUTIONS = [
   { id: "768x1344", label: "9:16" },
 ];
 
-function FramePlayer({ frames }: { frames: string[] }) {
+const SPEED_LABELS: Record<number, string> = {
+  200: "Rápido",
+  500: "Normal",
+  1000: "Lento",
+};
+
+// --- FramePlayer with speed control ---
+function FramePlayer({ frames, onCompileVideo }: { frames: string[]; onCompileVideo: (fps: number) => void }) {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [frameDelay, setFrameDelay] = useState(500);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (playing) {
       intervalRef.current = setInterval(() => {
         setCurrentFrame((f) => (f + 1) % frames.length);
-      }, 500);
+      }, frameDelay);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [playing, frames.length]);
+  }, [playing, frames.length, frameDelay]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="relative rounded-lg overflow-hidden bg-muted aspect-video">
         <img
           src={frames[currentFrame]}
@@ -75,6 +84,7 @@ function FramePlayer({ frames }: { frames: string[] }) {
           </Badge>
         </div>
       </div>
+      {/* Playback controls */}
       <div className="flex items-center justify-center gap-2">
         <Button
           variant="ghost" size="icon" className="h-7 w-7"
@@ -95,8 +105,86 @@ function FramePlayer({ frames }: { frames: string[] }) {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
+      {/* Speed slider */}
+      <div className="space-y-1">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] text-muted-foreground">Velocidade</span>
+          <span className="text-[10px] font-medium text-primary">
+            {SPEED_LABELS[frameDelay] || `${frameDelay}ms`}
+          </span>
+        </div>
+        <Slider
+          min={200} max={1000} step={100}
+          value={[frameDelay]}
+          onValueChange={([v]) => setFrameDelay(v)}
+          className="w-full"
+        />
+      </div>
+      {/* Export video button */}
+      <Button
+        variant="outline" size="sm" className="w-full text-xs"
+        onClick={() => onCompileVideo(Math.round(1000 / frameDelay))}
+      >
+        <Film className="h-3 w-3 mr-1" />
+        Baixar Vídeo (.webm)
+      </Button>
     </div>
   );
+}
+
+// --- Video compilation using Canvas + MediaRecorder ---
+async function compileFramesToVideo(frameUrls: string[], fps: number): Promise<Blob> {
+  const frameDuration = 1000 / fps;
+
+  // Load all images first
+  const images = await Promise.all(
+    frameUrls.map((url) => new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
+    }))
+  );
+
+  const width = images[0].naturalWidth;
+  const height = images[0].naturalHeight;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+
+  const stream = canvas.captureStream(0); // 0 = manual frame control
+  const recorder = new MediaRecorder(stream, {
+    mimeType: "video/webm;codecs=vp9",
+    videoBitsPerSecond: 5_000_000,
+  });
+
+  const chunks: Blob[] = [];
+  recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+  return new Promise((resolve, reject) => {
+    recorder.onstop = () => resolve(new Blob(chunks, { type: "video/webm" }));
+    recorder.onerror = (e) => reject(e);
+    recorder.start();
+
+    let frameIndex = 0;
+    const track = stream.getVideoTracks()[0] as any;
+
+    const drawNextFrame = () => {
+      if (frameIndex >= images.length) {
+        recorder.stop();
+        return;
+      }
+      ctx.drawImage(images[frameIndex], 0, 0, width, height);
+      if (track.requestFrame) track.requestFrame();
+      frameIndex++;
+      setTimeout(drawNextFrame, frameDuration);
+    };
+
+    drawNextFrame();
+  });
 }
 
 export function VideoStudio() {
@@ -105,6 +193,7 @@ export function VideoStudio() {
   const [resolution, setResolution] = useState("1344x768");
   const [selectedStyle, setSelectedStyle] = useState("Cinematográfico");
   const [loading, setLoading] = useState(false);
+  const [compiling, setCompiling] = useState(false);
 
   const { videoTasks, addVideoTask, updateVideoTask } = useAppStore();
 
@@ -135,7 +224,6 @@ export function VideoStudio() {
 
       if (error) throw error;
       if (data?.error) {
-        // Even if error, we might have partial frames
         if (data.frames?.length > 0) {
           updateVideoTask(taskId, { status: "success", progress: 100, frames: data.frames });
           toast.warning(`Geração parcial: ${data.frames.length} frames. ${data.error}`);
@@ -171,6 +259,26 @@ export function VideoStudio() {
     });
     toast.success("Frames baixados!");
   };
+
+  const handleCompileVideo = useCallback(async (frames: string[], fps: number) => {
+    setCompiling(true);
+    toast.info("Compilando vídeo...");
+    try {
+      const blob = await compileFramesToVideo(frames, fps);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `video-${Date.now()}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Vídeo .webm baixado!");
+    } catch (err: any) {
+      console.error("Compile error:", err);
+      toast.error("Erro ao compilar vídeo. Tente baixar os frames individuais.");
+    } finally {
+      setCompiling(false);
+    }
+  }, []);
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
@@ -225,7 +333,7 @@ export function VideoStudio() {
           </Button>
 
           <p className="text-[10px] text-muted-foreground text-center">
-            Gera uma sequência de frames animados via IA
+            Gera frames via IA e compila em vídeo .webm
           </p>
         </CardContent>
       </Card>
@@ -262,10 +370,12 @@ export function VideoStudio() {
                       <Clock className="h-3 w-3" />
                       {task.frames.length > 0 ? `${task.frames.length} frames` : task.model}
                     </div>
-                    {task.status === "processing" && <Progress value={task.progress} className="h-1.5" />}
                     {task.status === "success" && task.frames.length > 0 && (
                       <div className="mt-2">
-                        <FramePlayer frames={task.frames} />
+                        <FramePlayer
+                          frames={task.frames}
+                          onCompileVideo={(fps) => handleCompileVideo(task.frames, fps)}
+                        />
                         <Button
                           variant="outline" size="sm" className="w-full mt-2 text-xs"
                           onClick={() => handleDownloadFrames(task.frames)}
@@ -278,6 +388,14 @@ export function VideoStudio() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          )}
+          {compiling && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm font-medium">Compilando vídeo...</p>
+              </div>
             </div>
           )}
         </CardContent>
