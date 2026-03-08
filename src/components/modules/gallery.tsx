@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppStore } from "@/lib/store/app-store";
 
-type GalleryFilter = "all" | "image" | "video" | "qrcode";
+type GalleryFilter = "all" | "image" | "video" | "qrcode" | "upscale";
 
 export function Gallery() {
   const [filter, setFilter] = useState<GalleryFilter>("all");
