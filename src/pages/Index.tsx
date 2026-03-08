@@ -29,7 +29,7 @@ const moduleTitles = {
   chat: "Chat IA",
   image: "Laboratório de Imagem",
   editor: "Editor de Imagem",
-  video: "Estúdio de Vídeo",
+  video: "Frames de Vídeo",
   qrcode: "Gerador de QR Code",
   music: "Music DNA",
   gallery: "Galeria",
