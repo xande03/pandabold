@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ModuleId = 'chat' | 'image' | 'editor' | 'video' | 'qrcode' | 'music' | 'gallery';
+export type ModuleId = 'chat' | 'image' | 'editor' | 'video' | 'qrcode' | 'music' | 'gallery' | 'summarizer' | 'signature';
 
 export interface ChatMessage {
   id: string;
