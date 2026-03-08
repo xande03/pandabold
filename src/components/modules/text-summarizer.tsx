@@ -1,15 +1,94 @@
 import { useState, useRef } from "react";
-import { FileText, Upload, Loader2, Copy, Check, Sparkles } from "lucide-react";
+import { FileText, Upload, Loader2, Copy, Check, Sparkles, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const SUMMARIZE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/summarize-text`;
 
 type OutputType = "resumo" | "pontos-chave" | "flashcards";
+
+function FlashcardGrid({ text }: { text: string }) {
+  const [flipped, setFlipped] = useState<Record<number, boolean>>({});
+
+  const cards = text.split(/\n\n+/).filter(block => block.includes("PERGUNTA:") && block.includes("RESPOSTA:")).map(block => {
+    const qMatch = block.match(/PERGUNTA:\s*(.+?)(?=\nRESPOSTA:)/s);
+    const aMatch = block.match(/RESPOSTA:\s*(.+)/s);
+    return {
+      question: qMatch?.[1]?.trim() || "",
+      answer: aMatch?.[1]?.trim() || "",
+    };
+  }).filter(c => c.question && c.answer);
+
+  if (cards.length === 0) {
+    return <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed">{text}</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {cards.map((card, i) => (
+        <div
+          key={i}
+          onClick={() => setFlipped(prev => ({ ...prev, [i]: !prev[i] }))}
+          className={cn(
+            "cursor-pointer rounded-xl border border-border p-4 min-h-[140px] flex flex-col justify-between transition-all duration-300 hover:shadow-md",
+            flipped[i] ? "bg-primary/10 border-primary/30" : "bg-card"
+          )}
+        >
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <Badge variant={flipped[i] ? "default" : "secondary"} className="text-[10px] shrink-0">
+              {flipped[i] ? "Resposta" : "Pergunta"} {i + 1}
+            </Badge>
+            <RotateCcw className="h-3 w-3 text-muted-foreground shrink-0" />
+          </div>
+          <p className="text-sm leading-relaxed flex-1">
+            {flipped[i] ? card.answer : card.question}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-2">Clique para virar</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function KeyPointsRenderer({ text }: { text: string }) {
+  const lines = text.split("\n").filter(l => l.trim());
+  
+  return (
+    <div className="space-y-3">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        // Category header: **Category**
+        if (/^\*\*[^*]+\*\*\s*$/.test(trimmed)) {
+          const title = trimmed.replace(/\*\*/g, "").trim();
+          return (
+            <div key={i} className="mt-4 first:mt-0">
+              <Badge variant="secondary" className="text-xs font-semibold">{title}</Badge>
+            </div>
+          );
+        }
+        // Bullet point with bold title
+        const bulletMatch = trimmed.match(/^[•\-]\s*\*\*(.+?)\*\*\s*[-–:]\s*(.+)/);
+        if (bulletMatch) {
+          return (
+            <div key={i} className="flex gap-2 pl-2">
+              <span className="text-primary mt-1 shrink-0">•</span>
+              <p className="text-sm leading-relaxed">
+                <span className="font-semibold text-foreground">{bulletMatch[1]}</span>
+                <span className="text-muted-foreground"> — {bulletMatch[2]}</span>
+              </p>
+            </div>
+          );
+        }
+        return <p key={i} className="text-sm leading-relaxed pl-2">{trimmed}</p>;
+      })}
+    </div>
+  );
+}
 
 export function TextSummarizer() {
   const [inputText, setInputText] = useState("");
@@ -108,6 +187,32 @@ export function TextSummarizer() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const renderResult = () => {
+    if (!result) {
+      return (
+        <div className="flex flex-col items-center justify-center h-48 text-muted-foreground text-sm">
+          <FileText className="h-10 w-10 mb-2 opacity-40" />
+          Cole um texto e clique em Gerar
+        </div>
+      );
+    }
+
+    if (outputType === "flashcards") {
+      return <FlashcardGrid text={result} />;
+    }
+
+    if (outputType === "pontos-chave") {
+      return <KeyPointsRenderer text={result} />;
+    }
+
+    // resumo - texto corrido
+    return (
+      <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed">
+        {result}
+      </div>
+    );
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Input */}
@@ -170,18 +275,7 @@ export function TextSummarizer() {
           </div>
           {result && <Badge variant="secondary" className="w-fit">{outputType}</Badge>}
         </CardHeader>
-        <CardContent>
-          {result ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-              {result}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground text-sm">
-              <FileText className="h-10 w-10 mb-2 opacity-40" />
-              Cole um texto e clique em Gerar
-            </div>
-          )}
-        </CardContent>
+        <CardContent>{renderResult()}</CardContent>
       </Card>
     </div>
   );

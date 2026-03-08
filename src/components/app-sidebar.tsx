@@ -1,6 +1,6 @@
 import {
   MessageSquare, ImageIcon, Paintbrush, Video, QrCode,
-  Music, LayoutGrid, FileText, PenTool,
+  Music, LayoutGrid, FileText, PenTool, PanelLeftClose, PanelLeft,
 } from "lucide-react";
 import { useAppStore, type ModuleId } from "@/lib/store/app-store";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -18,6 +18,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 const modules: { id: ModuleId; label: string; icon: React.ElementType }[] = [
   { id: "chat", label: "Chat IA", icon: MessageSquare },
@@ -33,7 +34,7 @@ const modules: { id: ModuleId; label: string; icon: React.ElementType }[] = [
 
 export function AppSidebar() {
   const { activeModule, setActiveModule } = useAppStore();
-  const { state, setOpenMobile } = useSidebar();
+  const { state, setOpenMobile, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
 
   const handleSelect = (id: ModuleId) => {
@@ -42,7 +43,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="p-3">
         <div className="flex items-center gap-2 overflow-hidden">
           <div className="pulse-glow flex h-8 w-8 shrink-0 items-center justify-center rounded-lg btn-gradient text-sm font-black">
@@ -69,7 +70,7 @@ export function AppSidebar() {
                       tooltip={m.label}
                       className={cn(
                         "transition-all",
-                        active && "bg-accent text-accent-foreground font-medium"
+                        active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                       )}
                     >
                       <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
@@ -83,8 +84,16 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-3 space-y-2">
         <ThemeToggle />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="h-9 w-9 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );

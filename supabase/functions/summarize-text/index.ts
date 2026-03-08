@@ -6,9 +6,41 @@ const corsHeaders = {
 };
 
 const PROMPTS: Record<string, string> = {
-  resumo: "Resuma o texto a seguir de forma clara e concisa, mantendo os pontos mais importantes. Responda em português.",
-  "pontos-chave": "Extraia os pontos-chave do texto a seguir em uma lista numerada. Seja objetivo e claro. Responda em português.",
-  flashcards: "Crie flashcards (pergunta e resposta) baseados no conteúdo do texto a seguir. Formato: Q: pergunta\\nA: resposta. Responda em português.",
+  resumo: `Você é um especialista em análise e síntese de textos. Resuma o texto a seguir de forma detalhada e profissional.
+
+REGRAS OBRIGATÓRIAS:
+- Escreva em parágrafos contínuos e bem estruturados (NUNCA use bullet points ou listas)
+- Divida o resumo em parágrafos claros, cada um abordando um aspecto diferente do conteúdo
+- Descreva detalhes importantes, contexto, aspectos relevantes e informações pertinentes
+- Mantenha coerência e fluidez entre os parágrafos
+- Use linguagem formal e precisa
+- O resumo deve cobrir todos os pontos principais do texto original
+- Responda em português brasileiro`,
+
+  "pontos-chave": `Você é um especialista em análise de conteúdo. Extraia os pontos-chave do texto a seguir.
+
+REGRAS OBRIGATÓRIAS DE FORMATAÇÃO:
+- Organize os pontos por categorias temáticas
+- Cada categoria deve ter um título em negrito usando ** (ex: **Categoria**)
+- Abaixo de cada categoria, liste os pontos no formato: "• **Título do Ponto** - Descrição resumida e objetiva do ponto."
+- Cada ponto deve ter um título em negrito seguido de uma descrição clara
+- Cubra todos os aspectos importantes do texto
+- Use entre 5 a 15 pontos dependendo da extensão do texto
+- Responda em português brasileiro`,
+
+  flashcards: `Você é um especialista em criar material de estudo. Crie flashcards baseados no conteúdo do texto a seguir.
+
+REGRAS OBRIGATÓRIAS DE FORMATAÇÃO:
+- Crie entre 5 a 20 flashcards dependendo da extensão do conteúdo
+- Cada flashcard DEVE seguir EXATAMENTE este formato:
+PERGUNTA: [pergunta clara e específica sobre o conteúdo]
+RESPOSTA: [resposta completa e coerente baseada no texto]
+
+- Separe cada flashcard com uma linha em branco
+- As perguntas devem cobrir os conceitos mais importantes do texto
+- As respostas devem ser precisas e baseadas exclusivamente no conteúdo fornecido
+- Varie os tipos de perguntas: conceituais, factuais, comparativas
+- Responda em português brasileiro`,
 };
 
 serve(async (req) => {
@@ -23,7 +55,6 @@ serve(async (req) => {
 
     let inputText = text;
     if (text.startsWith("__PDF_BASE64__")) {
-      // For PDF, we pass the base64 and ask the model to interpret it
       inputText = "O seguinte conteúdo é de um arquivo PDF (base64). Extraia e processe o texto: " + text.slice(14).substring(0, 50000);
     }
 
