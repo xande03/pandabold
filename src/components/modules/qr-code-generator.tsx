@@ -140,7 +140,7 @@ export function QRCodeGenerator() {
       qrContent = urlData.publicUrl;
     }
 
-    setLoading(true);
+    if (!loading) setLoading(true);
 
     try {
       const qrDataUrl = await QRCodeLib.toDataURL(qrContent, {
