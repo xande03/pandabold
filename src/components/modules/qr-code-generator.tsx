@@ -37,7 +37,7 @@ const ACCEPTED_FILES: Record<string, string> = {
   image: "image/*",
   music: "audio/*",
   pdf: ".pdf,application/pdf",
-  file: "*",
+  file: "*/*,.zip,.rar,.7z",
 };
 
 export function QRCodeGenerator() {
