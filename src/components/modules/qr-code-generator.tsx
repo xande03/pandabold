@@ -6,6 +6,7 @@ import {
   ImageIcon,
   Music,
   FileText,
+  File,
   Download,
   Copy,
   Upload,
