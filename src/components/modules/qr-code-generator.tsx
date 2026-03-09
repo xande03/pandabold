@@ -197,7 +197,7 @@ export function QRCodeGenerator() {
     }
   };
 
-  const needsFile = ["image", "music", "pdf"].includes(qrType);
+  const needsFile = ["image", "music", "pdf", "file"].includes(qrType);
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
