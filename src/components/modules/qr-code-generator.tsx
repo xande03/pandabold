@@ -119,7 +119,25 @@ export function QRCodeGenerator() {
       qrContent = content.trim();
     } else {
       if (!file) { toast.error("Envie um arquivo"); return; }
-      qrContent = `Panda Bold - ${qrType}: ${file.name}`;
+
+      // Upload file to storage
+      setLoading(true);
+      const filePath = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("qr-files")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        toast.error("Falha no upload do arquivo");
+        setLoading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("qr-files")
+        .getPublicUrl(filePath);
+
+      qrContent = urlData.publicUrl;
     }
 
     setLoading(true);
