@@ -5,6 +5,7 @@ import {
   Play,
   Pause,
   Link as LinkIcon,
+  Hash,
   Loader2,
   BarChart3,
   Guitar,
