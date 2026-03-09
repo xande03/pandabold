@@ -6,6 +6,7 @@ import {
   ImageIcon,
   Music,
   FileText,
+  File,
   Download,
   Copy,
   Upload,
@@ -29,12 +30,14 @@ const QR_TYPES = [
   { id: "image", label: "Imagem", icon: ImageIcon },
   { id: "music", label: "Música", icon: Music },
   { id: "pdf", label: "PDF", icon: FileText },
+  { id: "file", label: "Arquivo", icon: File },
 ];
 
 const ACCEPTED_FILES: Record<string, string> = {
   image: "image/*",
   music: "audio/*",
   pdf: ".pdf,application/pdf",
+  file: "*",
 };
 
 export function QRCodeGenerator() {
@@ -116,10 +119,28 @@ export function QRCodeGenerator() {
       qrContent = content.trim();
     } else {
       if (!file) { toast.error("Envie um arquivo"); return; }
-      qrContent = `Panda Bold - ${qrType}: ${file.name}`;
+
+      // Upload file to storage
+      setLoading(true);
+      const filePath = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("qr-files")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        toast.error("Falha no upload do arquivo");
+        setLoading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("qr-files")
+        .getPublicUrl(filePath);
+
+      qrContent = urlData.publicUrl;
     }
 
-    setLoading(true);
+    if (!loading) setLoading(true);
 
     try {
       const qrDataUrl = await QRCodeLib.toDataURL(qrContent, {
@@ -176,7 +197,7 @@ export function QRCodeGenerator() {
     }
   };
 
-  const needsFile = ["image", "music", "pdf"].includes(qrType);
+  const needsFile = ["image", "music", "pdf", "file"].includes(qrType);
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
