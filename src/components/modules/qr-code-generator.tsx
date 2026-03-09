@@ -30,12 +30,14 @@ const QR_TYPES = [
   { id: "image", label: "Imagem", icon: ImageIcon },
   { id: "music", label: "Música", icon: Music },
   { id: "pdf", label: "PDF", icon: FileText },
+  { id: "file", label: "Arquivo", icon: File },
 ];
 
 const ACCEPTED_FILES: Record<string, string> = {
   image: "image/*",
   music: "audio/*",
   pdf: ".pdf,application/pdf",
+  file: "*",
 };
 
 export function QRCodeGenerator() {
