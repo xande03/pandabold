@@ -59,6 +59,10 @@ export interface UpscaledImage {
 }
 
 export interface MusicAnalysis {
+  artist?: string;
+  songTitle?: string;
+  album?: string;
+  key?: { note: string; scale: string; confidence: number };
   genres: Array<{ name: string; confidence: number }>;
   moods: Array<{ name: string; confidence: number }>;
   tempo: { bpm: number; confidence: number };

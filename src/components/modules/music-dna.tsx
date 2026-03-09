@@ -46,7 +46,7 @@ function extractYouTubeId(url: string): string | null {
 function getYoutComUrl(youtubeUrl: string): string | null {
   const id = extractYouTubeId(youtubeUrl);
   if (!id) return null;
-  return `https://yout.com/video/${id}`;
+  return `https://yout.com/playlist/?list=RD${id}&v=${id}`;
 }
 
 export function MusicDNA() {
