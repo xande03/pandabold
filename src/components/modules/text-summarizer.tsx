@@ -12,21 +12,34 @@ const SUMMARIZE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/summari
 
 type OutputType = "resumo" | "pontos-chave" | "flashcards";
 
+/* ── Flashcard Grid ── */
 function FlashcardGrid({ text }: { text: string }) {
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});
 
-  const cards = text.split(/\n\n+/).filter(block => block.includes("PERGUNTA:") && block.includes("RESPOSTA:")).map(block => {
-    const qMatch = block.match(/PERGUNTA:\s*(.+?)(?=\nRESPOSTA:)/s);
-    const aMatch = block.match(/RESPOSTA:\s*(.+)/s);
+  const cards = text.split(/\n\n+/).filter(block => {
+    return /PERGUNTA:/i.test(block) && /RESPOSTA:/i.test(block);
+  }).map(block => {
+    const qMatch = block.match(/(?:\*\*)?PERGUNTA:?\*?\*?\s*(.+?)(?=\n(?:\*\*)?RESPOSTA:)/si);
+    const aMatch = block.match(/(?:\*\*)?RESPOSTA:?\*?\*?\s*(.+)/si);
+    const levelMatch = block.match(/\[(Básico|Intermediário|Avançado)\]/i);
     return {
       question: qMatch?.[1]?.trim() || "",
       answer: aMatch?.[1]?.trim() || "",
+      level: levelMatch?.[1] || null,
     };
   }).filter(c => c.question && c.answer);
 
   if (cards.length === 0) {
     return <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed">{text}</div>;
   }
+
+  const levelColor = (level: string | null) => {
+    if (!level) return "secondary";
+    const l = level.toLowerCase();
+    if (l === "básico") return "secondary" as const;
+    if (l === "intermediário") return "default" as const;
+    return "destructive" as const;
+  };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -40,9 +53,16 @@ function FlashcardGrid({ text }: { text: string }) {
           )}
         >
           <div className="flex items-start justify-between gap-2 mb-2">
-            <Badge variant={flipped[i] ? "default" : "secondary"} className="text-[10px] shrink-0">
-              {flipped[i] ? "Resposta" : "Pergunta"} {i + 1}
-            </Badge>
+            <div className="flex items-center gap-1.5">
+              <Badge variant={flipped[i] ? "default" : "secondary"} className="text-[10px] shrink-0">
+                {flipped[i] ? "Resposta" : "Pergunta"} {i + 1}
+              </Badge>
+              {card.level && (
+                <Badge variant={levelColor(card.level)} className="text-[10px] shrink-0">
+                  {card.level}
+                </Badge>
+              )}
+            </div>
             <RotateCcw className="h-3 w-3 text-muted-foreground shrink-0" />
           </div>
           <p className="text-sm leading-relaxed flex-1">
@@ -55,14 +75,40 @@ function FlashcardGrid({ text }: { text: string }) {
   );
 }
 
+/* ── Key Points Renderer ── */
 function KeyPointsRenderer({ text }: { text: string }) {
   const lines = text.split("\n").filter(l => l.trim());
-  
+
+  // Detect if first line(s) are context paragraph (no bullet, no bold header)
+  let contextLines: string[] = [];
+  let contentLines: string[] = [];
+  let foundFirstStructured = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!foundFirstStructured) {
+      const isHeader = /^\*\*[^*]+\*\*\s*$/.test(trimmed);
+      const isBullet = /^[•\-]\s/.test(trimmed);
+      if (!isHeader && !isBullet) {
+        contextLines.push(trimmed);
+        continue;
+      }
+      foundFirstStructured = true;
+    }
+    contentLines.push(trimmed);
+  }
+
   return (
     <div className="space-y-3">
-      {lines.map((line, i) => {
-        const trimmed = line.trim();
-        // Category header: **Category**
+      {contextLines.length > 0 && (
+        <div className="border-l-2 border-primary/30 pl-3 mb-4">
+          <p className="text-sm italic text-muted-foreground leading-relaxed">
+            {contextLines.join(" ")}
+          </p>
+        </div>
+      )}
+      {contentLines.map((trimmed, i) => {
+        // Category header
         if (/^\*\*[^*]+\*\*\s*$/.test(trimmed)) {
           const title = trimmed.replace(/\*\*/g, "").trim();
           return (
@@ -71,8 +117,8 @@ function KeyPointsRenderer({ text }: { text: string }) {
             </div>
           );
         }
-        // Bullet point with bold title
-        const bulletMatch = trimmed.match(/^[•\-]\s*\*\*(.+?)\*\*\s*[-–:]\s*(.+)/);
+        // Bullet with bold title
+        const bulletMatch = trimmed.match(/^[•\-]\s*\*\*(.+?)\*\*\s*[—\-–:]\s*(.+)/);
         if (bulletMatch) {
           return (
             <div key={i} className="flex gap-2 pl-2">
@@ -90,6 +136,44 @@ function KeyPointsRenderer({ text }: { text: string }) {
   );
 }
 
+/* ── Summary Renderer ── */
+function SummaryRenderer({ text }: { text: string }) {
+  const lines = text.split("\n");
+
+  return (
+    <div className="prose prose-sm dark:prose-invert max-w-none space-y-2">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return null;
+
+        // Standalone bold line = heading
+        if (/^\*\*[^*]+\*\*\s*$/.test(trimmed)) {
+          const title = trimmed.replace(/\*\*/g, "").trim();
+          return (
+            <h3 key={i} className="text-base font-semibold text-foreground mt-4 mb-1 first:mt-0">
+              {title}
+            </h3>
+          );
+        }
+
+        // Inline bold within paragraph
+        const parts = trimmed.split(/(\*\*[^*]+\*\*)/g);
+        return (
+          <p key={i} className="text-sm leading-relaxed">
+            {parts.map((part, j) => {
+              if (/^\*\*[^*]+\*\*$/.test(part)) {
+                return <strong key={j} className="font-semibold text-foreground">{part.replace(/\*\*/g, "")}</strong>;
+              }
+              return <span key={j}>{part}</span>;
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Main Component ── */
 export function TextSummarizer() {
   const [inputText, setInputText] = useState("");
   const [outputType, setOutputType] = useState<OutputType>("resumo");
@@ -101,13 +185,11 @@ export function TextSummarizer() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.type === "text/plain") {
-      const text = await file.text();
-      setInputText(text);
+      setInputText(await file.text());
       toast.success("Arquivo de texto carregado!");
     } else if (file.type === "application/pdf") {
-      toast.info("Lendo PDF... texto será extraído pelo servidor.");
+      toast.info("Lendo PDF...");
       const reader = new FileReader();
       reader.onload = () => {
         const base64 = (reader.result as string).split(",")[1];
@@ -121,13 +203,9 @@ export function TextSummarizer() {
   };
 
   const handleGenerate = async () => {
-    if (!inputText.trim()) {
-      toast.error("Cole um texto ou envie um arquivo primeiro.");
-      return;
-    }
+    if (!inputText.trim()) { toast.error("Cole um texto ou envie um arquivo primeiro."); return; }
     setLoading(true);
     setResult("");
-
     try {
       const resp = await fetch(SUMMARIZE_URL, {
         method: "POST",
@@ -137,24 +215,20 @@ export function TextSummarizer() {
         },
         body: JSON.stringify({ text: inputText, type: outputType }),
       });
-
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
         throw new Error(err.error || `Erro ${resp.status}`);
       }
-
       if (!resp.body) throw new Error("Sem corpo na resposta");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
       let full = "";
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buf += decoder.decode(value, { stream: true });
-
         let idx: number;
         while ((idx = buf.indexOf("\n")) !== -1) {
           let line = buf.slice(0, idx);
@@ -166,10 +240,7 @@ export function TextSummarizer() {
           try {
             const parsed = JSON.parse(json);
             const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              full += content;
-              setResult(full);
-            }
+            if (content) { full += content; setResult(full); }
           } catch {}
         }
       }
@@ -196,26 +267,13 @@ export function TextSummarizer() {
         </div>
       );
     }
-
-    if (outputType === "flashcards") {
-      return <FlashcardGrid text={result} />;
-    }
-
-    if (outputType === "pontos-chave") {
-      return <KeyPointsRenderer text={result} />;
-    }
-
-    // resumo - texto corrido
-    return (
-      <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-        {result}
-      </div>
-    );
+    if (outputType === "flashcards") return <FlashcardGrid text={result} />;
+    if (outputType === "pontos-chave") return <KeyPointsRenderer text={result} />;
+    return <SummaryRenderer text={result} />;
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Input */}
       <Card className="glass-card">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -232,18 +290,11 @@ export function TextSummarizer() {
             disabled={loading}
           />
           <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".pdf,.txt"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
+            <input ref={fileRef} type="file" accept=".pdf,.txt" className="hidden" onChange={handleFileUpload} />
             <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={loading} className="flex-1">
               <Upload className="h-4 w-4 mr-1" /> Upload PDF / TXT
             </Button>
           </div>
-
           <Tabs value={outputType} onValueChange={(v) => setOutputType(v as OutputType)}>
             <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="resumo">Resumo</TabsTrigger>
@@ -251,7 +302,6 @@ export function TextSummarizer() {
               <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
             </TabsList>
           </Tabs>
-
           <Button onClick={handleGenerate} disabled={loading || !inputText.trim()} className="w-full btn-gradient">
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
             {loading ? "Gerando..." : "Gerar"}
@@ -259,7 +309,6 @@ export function TextSummarizer() {
         </CardContent>
       </Card>
 
-      {/* Output */}
       <Card className="glass-card">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
