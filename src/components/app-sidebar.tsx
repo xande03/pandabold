@@ -75,10 +75,10 @@ export function AppSidebar() {
                     >
                       <Icon className={cn(
                         "shrink-0 transition-all",
-                        collapsed ? "h-6 w-6" : "h-5 w-5",
+                        collapsed ? "h-7 w-7" : "h-[22px] w-[22px]",
                         active ? "text-primary" : "text-sidebar-foreground"
                       )} />
-                      <span className="text-sm text-sidebar-foreground">{m.label}</span>
+                      <span className="text-[15px] text-sidebar-foreground">{m.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
