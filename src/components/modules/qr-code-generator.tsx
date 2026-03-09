@@ -37,7 +37,7 @@ const ACCEPTED_FILES: Record<string, string> = {
   image: "image/*",
   music: "audio/*",
   pdf: ".pdf,application/pdf",
-  file: "*",
+  file: "*/*,.zip,.rar,.7z",
 };
 
 export function QRCodeGenerator() {
@@ -122,7 +122,8 @@ export function QRCodeGenerator() {
 
       // Upload file to storage
       setLoading(true);
-      const filePath = `${Date.now()}-${file.name}`;
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${Date.now()}-${sanitizedName}`;
       const { error: uploadError } = await supabase.storage
         .from("qr-files")
         .upload(filePath, file);

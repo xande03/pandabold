@@ -5,6 +5,7 @@ import {
   Play,
   Pause,
   Link as LinkIcon,
+  Hash,
   Loader2,
   BarChart3,
   Guitar,
@@ -46,7 +47,7 @@ function extractYouTubeId(url: string): string | null {
 function getYoutComUrl(youtubeUrl: string): string | null {
   const id = extractYouTubeId(youtubeUrl);
   if (!id) return null;
-  return `https://yout.com/video/${id}`;
+  return `https://yout.com/playlist/?list=RD${id}&v=${id}`;
 }
 
 export function MusicDNA() {
@@ -199,6 +200,35 @@ export function MusicDNA() {
       {/* Results */}
       {analysis && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Artist / Song / Album */}
+          {(analysis.artist || analysis.songTitle || analysis.album) && (
+            <Card className="border-border/50 card-gradient">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2"><Music className="h-4 w-4 text-primary" />Identificação</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-xs">
+                {analysis.artist && <p><span className="text-muted-foreground">Artista:</span> <span className="font-medium">{analysis.artist}</span></p>}
+                {analysis.songTitle && <p><span className="text-muted-foreground">Música:</span> <span className="font-medium">{analysis.songTitle}</span></p>}
+                {analysis.album && <p><span className="text-muted-foreground">Álbum:</span> <span className="font-medium">{analysis.album}</span></p>}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Key */}
+          {analysis.key && (
+            <Card className="border-border/50 card-gradient">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2"><Hash className="h-4 w-4 text-primary" />Tom</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <p className="text-3xl font-bold gradient-text">{analysis.key.note}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{analysis.key.scale}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Genres */}
           <Card className="border-border/50 card-gradient">
             <CardHeader className="pb-2">

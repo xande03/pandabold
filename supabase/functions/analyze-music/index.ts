@@ -28,8 +28,12 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um especialista em análise musical. Analise a música e retorne APENAS um JSON válido com a seguinte estrutura (sem markdown, sem código):
+            content: `Você é um especialista em análise e identificação musical. Identifique a música com precisão e retorne APENAS um JSON válido com a seguinte estrutura (sem markdown, sem código):
 {
+  "artist": "nome do artista/banda",
+  "songTitle": "nome da música",
+  "album": "nome do álbum",
+  "key": {"note": "C", "scale": "major", "confidence": 0.0-1.0},
   "genres": [{"name": "string", "confidence": 0.0-1.0}],
   "moods": [{"name": "string", "confidence": 0.0-1.0}],
   "tempo": {"bpm": number, "confidence": 0.0-1.0},
@@ -40,7 +44,8 @@ serve(async (req) => {
   "similarSongs": [{"title": "string", "artist": "string", "similarity": 0.0-1.0}],
   "lyrics": "letra completa da música se disponível, ou 'Letra não disponível'",
   "overallConfidence": 0.0-1.0
-}`
+}
+Identifique com precisão: artista, nome da música, álbum, tonalidade (key musical com nota e escala), BPM, gêneros, instrumentos e letra completa.`
           },
           { role: "user", content: prompt }
         ],
