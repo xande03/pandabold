@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { FileText, Upload, Loader2, Copy, Check, Sparkles, RotateCcw } from "lucide-react";
+import { FileText, Upload, Loader2, Copy, Check, Sparkles, RotateCcw, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
