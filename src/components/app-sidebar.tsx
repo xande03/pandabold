@@ -44,13 +44,16 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar-background">
       <SidebarHeader className="p-3">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <div className="pulse-glow flex h-9 w-9 shrink-0 items-center justify-center rounded-lg btn-gradient text-base font-black">
-            🐼
+        <div className="flex items-center justify-between overflow-hidden">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="pulse-glow flex h-9 w-9 shrink-0 items-center justify-center rounded-lg btn-gradient text-base font-black">
+              🐼
+            </div>
+            {!collapsed && (
+              <span className="text-xl font-bold gradient-text whitespace-nowrap">Panda Bold</span>
+            )}
           </div>
-          {!collapsed && (
-            <span className="text-xl font-bold gradient-text whitespace-nowrap">Panda Bold</span>
-          )}
+          {!collapsed && <ThemeToggle />}
         </div>
       </SidebarHeader>
 
