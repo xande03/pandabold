@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { FileText, Upload, Loader2, Copy, Check, Sparkles, RotateCcw } from "lucide-react";
+import { FileText, Upload, Loader2, Copy, Check, Sparkles, RotateCcw, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -258,6 +259,31 @@ export function TextSummarizer() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleExportTxt = () => {
+    const blob = new Blob([result], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "resumo-pandabold.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("TXT exportado!");
+  };
+
+  const handleExportPdf = () => {
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Resumo - PandaBold</title><style>body{font-family:system-ui,sans-serif;max-width:700px;margin:2rem auto;padding:0 1rem;line-height:1.6;color:#1a1a1a}h1,h2,h3{margin-top:1.5rem}ul{padding-left:1.5rem}</style></head><body><h1>Resumo — PandaBold</h1><div style="white-space:pre-wrap">${result.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div></body></html>`;
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank");
+    if (win) {
+      win.addEventListener("afterprint", () => URL.revokeObjectURL(url));
+      win.addEventListener("load", () => { win.print(); });
+    } else {
+      URL.revokeObjectURL(url);
+      toast.error("Permita pop-ups para exportar como PDF.");
+    }
+  };
+
   const renderResult = () => {
     if (!result) {
       return (
@@ -317,9 +343,26 @@ export function TextSummarizer() {
               Resultado
             </CardTitle>
             {result && (
-              <Button size="sm" variant="ghost" onClick={handleCopy}>
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button size="sm" variant="ghost" onClick={handleCopy}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="ghost">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleExportTxt}>
+                      <FileText className="h-4 w-4 mr-2" /> Exportar como TXT
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportPdf}>
+                      <Download className="h-4 w-4 mr-2" /> Exportar como PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
           {result && <Badge variant="secondary" className="w-fit">{outputType}</Badge>}
