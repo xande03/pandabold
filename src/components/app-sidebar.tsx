@@ -29,6 +29,7 @@ const modules: { id: ModuleId; label: string; description: string; icon: React.E
   { id: "summarizer", label: "Resumidor IA", description: "Resumos e flashcards", icon: FileText, color: "text-purple-500" },
   { id: "signature", label: "Assinatura", description: "Criar assinatura digital", icon: PenTool, color: "text-green-500" },
   { id: "video", label: "Frames de Vídeo", description: "Sequências de imagens", icon: Video, color: "text-sky-500" },
+  { id: "gallery", label: "Galeria", description: "Todas as suas criações", icon: LayoutGrid, color: "text-orange-500" },
 ];
 
 export function AppSidebar() {
