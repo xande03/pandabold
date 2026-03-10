@@ -109,7 +109,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3">
-        <ThemeToggle />
+        {collapsed && <ThemeToggle />}
       </SidebarFooter>
     </Sidebar>
   );
