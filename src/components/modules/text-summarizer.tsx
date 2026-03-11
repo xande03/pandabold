@@ -230,7 +230,8 @@ export function TextSummarizer() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ text: inputText, type: outputType }),
+        const selectedModel = SUMMARIZER_MODELS.find((m) => m.id === summarizerModel) || SUMMARIZER_MODELS[0];
+        body: JSON.stringify({ text: inputText, type: outputType, provider: selectedModel.provider, model: selectedModel.model }),
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
