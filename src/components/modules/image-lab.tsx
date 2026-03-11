@@ -112,11 +112,20 @@ export function ImageLab() {
       const selectedModel = IMAGE_MODELS.find((m) => m.id === model);
       const isZai = selectedModel?.provider === "zai";
 
+      const creationModelData = selectedCreationModel
+        ? CREATION_MODELS.find((m) => m.id === selectedCreationModel)
+        : null;
+
       const { data, error } = await supabase.functions.invoke(
         isZai ? "generate-image-zai" : "generate-image",
         {
           body: isZai
-            ? { prompt: finalPrompt, size }
+            ? {
+                prompt: finalPrompt,
+                size,
+                creationMode: creationModelData?.name || undefined,
+                referenceImage: referenceImage || undefined,
+              }
             : { prompt: finalPrompt, referenceImage: referenceImage || undefined, model },
         }
       );

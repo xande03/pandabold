@@ -45,8 +45,6 @@ const AI_MODELS = [
   { id: "meta-llama/llama-4-scout", name: "Llama 4 Scout", provider: "OpenRouter", endpoint: "chat-openrouter" },
   { id: "deepseek/deepseek-chat-v3-0324", name: "DeepSeek V3", provider: "OpenRouter", endpoint: "chat-openrouter" },
   { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B", provider: "OpenRouter", endpoint: "chat-openrouter" },
-  { id: "glm-5", name: "GLM-5", provider: "Z.ai", endpoint: "chat-zai" },
-  { id: "glm-4-plus", name: "GLM-4 Plus", provider: "Z.ai", endpoint: "chat-zai" },
 ];
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
