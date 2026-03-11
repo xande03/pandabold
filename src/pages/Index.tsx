@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ChatArena } from "@/components/modules/chat-arena";
 import { ImageLab } from "@/components/modules/image-lab";
 import { ImageEditor } from "@/components/modules/image-editor";
-import { VideoStudio } from "@/components/modules/video-studio";
+
 import { QRCodeGenerator } from "@/components/modules/qr-code-generator";
 import { MusicDNA } from "@/components/modules/music-dna";
 import { Gallery } from "@/components/modules/gallery";
