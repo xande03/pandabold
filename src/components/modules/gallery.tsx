@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppStore } from "@/lib/store/app-store";
 
-type GalleryFilter = "all" | "generated" | "edited" | "qrcode" | "upscale" | "video";
+type GalleryFilter = "all" | "generated" | "edited" | "qrcode" | "upscale";
 type SortOrder = "newest" | "oldest";
 
 export function Gallery() {
