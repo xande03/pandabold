@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import {
-  LayoutGrid, ImageIcon, Video, QrCode, Download, Eye,
+  LayoutGrid, ImageIcon, QrCode, Download, Eye,
   Filter, Maximize2, ArrowUpDown,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
