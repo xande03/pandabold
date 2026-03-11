@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import OpenAI from "https://esm.sh/openai@4.85.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,35 +53,45 @@ serve(async (req) => {
     const ZAI_API_KEY = Deno.env.get("ZAI_API_KEY");
     if (!ZAI_API_KEY) throw new Error("ZAI_API_KEY is not configured");
 
+    // Initialize OpenAI SDK with Z.ai endpoint
+    const client = new OpenAI({
+      apiKey: ZAI_API_KEY,
+      baseURL: "https://api.z.ai/api/paas/v4/",
+    });
+
     // Build enhanced prompt with creation mode context
     let enhancedPrompt = prompt;
     if (creationMode) {
       enhancedPrompt = `[Modo de criação: ${creationMode}] ${prompt}`;
     }
-
-    // If reference image is provided, add instruction
     if (referenceImage) {
       enhancedPrompt = `${enhancedPrompt}\n\n[Use a imagem de referência fornecida como base para a transformação]`;
     }
 
-    const response = await fetch("https://api.z.ai/api/paas/v4/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${ZAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    // Parse size to width x height format
+    const sizeStr = size || "1024x1024";
+
+    try {
+      const response = await client.images.generate({
         model: "glm-image",
         prompt: enhancedPrompt,
-        size: size || "1024x1024",
-      }),
-    });
+        size: sizeStr as any,
+      });
 
-    if (!response.ok) {
-      console.error("Z.ai image error:", response.status);
-      // Fallback to Lovable AI for ANY Z.ai error
+      const imageUrl = response.data?.[0]?.url;
+
+      if (!imageUrl) {
+        throw new Error("Nenhuma imagem retornada pela Z.ai");
+      }
+
+      return new Response(JSON.stringify({ imageUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (zaiError: any) {
+      console.error("Z.ai SDK error:", zaiError.status || zaiError.message);
+      // Fallback to Lovable AI
+      console.log(`Z.ai failed (${zaiError.status || "unknown"}), falling back to Lovable AI...`);
       try {
-        console.log(`Z.ai image failed (${response.status}), falling back to Lovable AI...`);
         const fallbackImageUrl = await generateImageWithFallback(prompt, referenceImage);
         return new Response(
           JSON.stringify({
@@ -103,19 +114,6 @@ serve(async (req) => {
         });
       }
     }
-
-    const data = await response.json();
-    const imageUrl = data.data?.[0]?.url;
-
-    if (!imageUrl) {
-      return new Response(JSON.stringify({ error: "Nenhuma imagem retornada pela Z.ai" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ imageUrl }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     console.error("generate-image-zai error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
