@@ -164,6 +164,7 @@ export function ChatArena() {
     await streamChat(
       msgs,
       model,
+      endpoint,
       (chunk) => { accumulated += chunk; updateFn(accumulated); },
       () => setLoading(false),
       (err) => { toast.error(err); setLoading(false); },
