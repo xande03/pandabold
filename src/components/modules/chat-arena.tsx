@@ -26,15 +26,23 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const AI_MODELS = [
-  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "Google" },
-  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google" },
-  { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", provider: "Google" },
-  { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "Google" },
-  { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro", provider: "Google" },
-  { id: "openai/gpt-5", name: "GPT-5", provider: "OpenAI" },
-  { id: "openai/gpt-5-mini", name: "GPT-5 Mini", provider: "OpenAI" },
-  { id: "openai/gpt-5-nano", name: "GPT-5 Nano", provider: "OpenAI" },
-  { id: "openai/gpt-5.2", name: "GPT-5.2", provider: "OpenAI" },
+  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "Google", endpoint: "chat" },
+  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", endpoint: "chat" },
+  { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", provider: "Google", endpoint: "chat" },
+  { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "Google", endpoint: "chat" },
+  { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro", provider: "Google", endpoint: "chat" },
+  { id: "openai/gpt-5", name: "GPT-5", provider: "OpenAI", endpoint: "chat" },
+  { id: "openai/gpt-5-mini", name: "GPT-5 Mini", provider: "OpenAI", endpoint: "chat" },
+  { id: "openai/gpt-5-nano", name: "GPT-5 Nano", provider: "OpenAI", endpoint: "chat" },
+  { id: "openai/gpt-5.2", name: "GPT-5.2", provider: "OpenAI", endpoint: "chat" },
+  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", provider: "Groq", endpoint: "chat-groq" },
+  { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", provider: "Groq", endpoint: "chat-groq" },
+  { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", provider: "Groq", endpoint: "chat-groq" },
+  { id: "gemma2-9b-it", name: "Gemma 2 9B", provider: "Groq", endpoint: "chat-groq" },
+  { id: "meta-llama/llama-4-maverick", name: "Llama 4 Maverick", provider: "OpenRouter", endpoint: "chat-openrouter" },
+  { id: "meta-llama/llama-4-scout", name: "Llama 4 Scout", provider: "OpenRouter", endpoint: "chat-openrouter" },
+  { id: "deepseek/deepseek-chat-v3-0324", name: "DeepSeek V3", provider: "OpenRouter", endpoint: "chat-openrouter" },
+  { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B", provider: "OpenRouter", endpoint: "chat-openrouter" },
 ];
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
