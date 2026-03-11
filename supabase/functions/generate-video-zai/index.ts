@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, duration = 5, resolution = "1920x1080", fps = 30, pollTaskId } = await req.json();
+    const { prompt, duration = 5, resolution = "1920x1080", pollTaskId } = await req.json();
     const ZAI_API_KEY = Deno.env.get("ZAI_API_KEY");
     if (!ZAI_API_KEY) throw new Error("ZAI_API_KEY is not configured");
 
@@ -54,11 +54,10 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "cogvideox-2",
+        model: "cogvideox-3",
         prompt,
-        duration,
-        resolution,
-        fps,
+        quality: "speed",
+        size: resolution,
       }),
     });
 

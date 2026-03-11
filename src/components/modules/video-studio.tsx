@@ -48,7 +48,7 @@ export function VideoStudio() {
     addVideoTask({
       id: taskId,
       prompt: prompt.trim(),
-      model: "cogvideox-2",
+      model: "cogvideox-3",
       status: "processing",
       progress: 0,
       frames: [],
