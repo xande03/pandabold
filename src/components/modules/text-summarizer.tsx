@@ -223,6 +223,7 @@ export function TextSummarizer() {
     if (!inputText.trim()) { toast.error("Cole um texto ou envie um arquivo primeiro."); return; }
     setLoading(true);
     setResult("");
+    const selectedModel = SUMMARIZER_MODELS.find((m) => m.id === summarizerModel) || SUMMARIZER_MODELS[0];
     try {
       const resp = await fetch(SUMMARIZE_URL, {
         method: "POST",
@@ -230,7 +231,6 @@ export function TextSummarizer() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        const selectedModel = SUMMARIZER_MODELS.find((m) => m.id === summarizerModel) || SUMMARIZER_MODELS[0];
         body: JSON.stringify({ text: inputText, type: outputType, provider: selectedModel.provider, model: selectedModel.model }),
       });
       if (!resp.ok) {
