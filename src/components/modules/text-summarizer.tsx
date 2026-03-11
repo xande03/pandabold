@@ -5,11 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const SUMMARIZE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/summarize-text`;
+
+const SUMMARIZER_MODELS = [
+  { id: "gemini-pro", name: "Gemini 2.5 Pro", provider: "lovable", model: "google/gemini-2.5-pro" },
+  { id: "gemini-flash", name: "Gemini 2.5 Flash", provider: "lovable", model: "google/gemini-2.5-flash" },
+  { id: "deepseek-v3", name: "DeepSeek V3", provider: "openrouter", model: "deepseek/deepseek-chat-v3-0324" },
+  { id: "llama-4-maverick", name: "Llama 4 Maverick", provider: "openrouter", model: "meta-llama/llama-4-maverick" },
+  { id: "qwen-72b", name: "Qwen 2.5 72B", provider: "openrouter", model: "qwen/qwen-2.5-72b-instruct" },
+];
 
 type OutputType = "resumo" | "pontos-chave" | "flashcards";
 
@@ -178,6 +193,7 @@ function SummaryRenderer({ text }: { text: string }) {
 export function TextSummarizer() {
   const [inputText, setInputText] = useState("");
   const [outputType, setOutputType] = useState<OutputType>("resumo");
+  const [summarizerModel, setSummarizerModel] = useState(SUMMARIZER_MODELS[0].id);
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -207,6 +223,7 @@ export function TextSummarizer() {
     if (!inputText.trim()) { toast.error("Cole um texto ou envie um arquivo primeiro."); return; }
     setLoading(true);
     setResult("");
+    const selectedModel = SUMMARIZER_MODELS.find((m) => m.id === summarizerModel) || SUMMARIZER_MODELS[0];
     try {
       const resp = await fetch(SUMMARIZE_URL, {
         method: "POST",
@@ -214,7 +231,7 @@ export function TextSummarizer() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ text: inputText, type: outputType }),
+        body: JSON.stringify({ text: inputText, type: outputType, provider: selectedModel.provider, model: selectedModel.model }),
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
@@ -328,6 +345,22 @@ export function TextSummarizer() {
               <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
             </TabsList>
           </Tabs>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Modelo de IA</label>
+            <Select value={summarizerModel} onValueChange={setSummarizerModel}>
+              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SUMMARIZER_MODELS.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    <div className="flex items-center gap-2">
+                      {m.name}
+                      <Badge variant="outline" className="text-[10px] h-4">{m.provider === "openrouter" ? "OpenRouter" : "Lovable"}</Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button onClick={handleGenerate} disabled={loading || !inputText.trim()} className="w-full btn-gradient">
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
             {loading ? "Gerando..." : "Gerar"}
