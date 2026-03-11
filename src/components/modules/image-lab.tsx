@@ -43,9 +43,9 @@ import { GenerationLoading } from "@/components/ui/generation-loading";
 import { supabase } from "@/integrations/supabase/client";
 
 const IMAGE_MODELS = [
-  { id: "google/gemini-3-pro-image-preview", name: "Nano Banana Pro", tier: "Padrão", provider: "lovable" },
+  { id: "glm-image", name: "GLM-Image (Z.ai)", tier: "Padrão", provider: "zai" },
+  { id: "google/gemini-3-pro-image-preview", name: "Nano Banana Pro", tier: "Pro", provider: "lovable" },
   { id: "google/gemini-2.5-flash-image", name: "Nano Banana", tier: "Rápido", provider: "lovable" },
-  { id: "glm-image", name: "GLM-Image (Z.ai)", tier: "Z.ai", provider: "zai" },
 ];
 
 const SIZES = [
@@ -112,11 +112,20 @@ export function ImageLab() {
       const selectedModel = IMAGE_MODELS.find((m) => m.id === model);
       const isZai = selectedModel?.provider === "zai";
 
+      const creationModelData = selectedCreationModel
+        ? CREATION_MODELS.find((m) => m.id === selectedCreationModel)
+        : null;
+
       const { data, error } = await supabase.functions.invoke(
         isZai ? "generate-image-zai" : "generate-image",
         {
           body: isZai
-            ? { prompt: finalPrompt, size }
+            ? {
+                prompt: finalPrompt,
+                size,
+                creationMode: creationModelData?.name || undefined,
+                referenceImage: referenceImage || undefined,
+              }
             : { prompt: finalPrompt, referenceImage: referenceImage || undefined, model },
         }
       );

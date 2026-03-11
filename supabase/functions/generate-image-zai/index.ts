@@ -5,10 +5,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function generateImageWithFallback(prompt: string) {
+async function generateImageWithFallback(prompt: string, referenceImage?: string) {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
     throw new Error("LOVABLE_API_KEY is not configured for fallback");
+  }
+
+  const content: any[] = [{ type: "text", text: prompt }];
+  if (referenceImage) {
+    content.push({ type: "image_url", image_url: { url: referenceImage } });
   }
 
   const fallbackResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -19,12 +24,7 @@ async function generateImageWithFallback(prompt: string) {
     },
     body: JSON.stringify({
       model: "google/gemini-2.5-flash-image",
-      messages: [
-        {
-          role: "user",
-          content: [{ type: "text", text: prompt }],
-        },
-      ],
+      messages: [{ role: "user", content }],
       modalities: ["image", "text"],
     }),
   });
@@ -48,9 +48,20 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, size } = await req.json();
+    const { prompt, size, creationMode, referenceImage } = await req.json();
     const ZAI_API_KEY = Deno.env.get("ZAI_API_KEY");
     if (!ZAI_API_KEY) throw new Error("ZAI_API_KEY is not configured");
+
+    // Build enhanced prompt with creation mode context
+    let enhancedPrompt = prompt;
+    if (creationMode) {
+      enhancedPrompt = `[Modo de criação: ${creationMode}] ${prompt}`;
+    }
+
+    // If reference image is provided, add instruction
+    if (referenceImage) {
+      enhancedPrompt = `${enhancedPrompt}\n\n[Use a imagem de referência fornecida como base para a transformação]`;
+    }
 
     const response = await fetch("https://api.z.ai/api/paas/v4/images/generations", {
       method: "POST",
@@ -60,7 +71,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "glm-image",
-        prompt,
+        prompt: enhancedPrompt,
         size: size || "1024x1024",
       }),
     });
@@ -68,7 +79,7 @@ serve(async (req) => {
     if (!response.ok) {
       if (response.status === 429) {
         try {
-          const fallbackImageUrl = await generateImageWithFallback(prompt);
+          const fallbackImageUrl = await generateImageWithFallback(prompt, referenceImage);
           return new Response(
             JSON.stringify({
               imageUrl: fallbackImageUrl,
@@ -83,7 +94,7 @@ serve(async (req) => {
         } catch (fallbackError) {
           console.error("Fallback image error:", fallbackError);
           return new Response(JSON.stringify({
-            error: "Limite de requisições Z.ai excedido. Tente novamente em instantes.",
+            error: "Limite de requisições excedido. Tente novamente em instantes.",
             code: 429,
             retryable: true,
           }), {
