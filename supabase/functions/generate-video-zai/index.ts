@@ -145,7 +145,7 @@ async function generateVideoFallback(prompt: string, resolution: string) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-pro-image-preview",
+        model: "google/gemini-3.1-flash-image-preview",
         messages: [{ role: "user", content: `Generate a cinematic still frame for a video scene: ${prompt}. Resolution: ${resolution}. Make it photorealistic and cinematic.` }],
         modalities: ["image", "text"],
       }),

@@ -132,7 +132,7 @@ export function ImageLab() {
             : {
                 prompt: finalPrompt,
                 referenceImage: referenceImage || undefined,
-                model: isZai ? "google/gemini-3-pro-image-preview" : model,
+                model: isZai ? "google/gemini-3.1-flash-image-preview" : model,
               },
         }
       );

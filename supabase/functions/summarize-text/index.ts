@@ -91,7 +91,7 @@ function getProviderConfig(provider: string, model?: string): ProviderConfig {
   return {
     url: "https://ai.gateway.lovable.dev/v1/chat/completions",
     apiKey,
-    model: model || "google/gemini-2.5-pro",
+    model: model || "google/gemini-2.5-flash-lite",
   };
 }
 
