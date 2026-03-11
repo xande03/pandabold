@@ -130,7 +130,9 @@ export function ChatArena() {
     const input = side === "A" ? inputA : inputB;
     if (!input.trim()) return;
 
-    const model = side === "A" ? modelA : modelB;
+    const modelInfo = AI_MODELS.find((m) => m.id === (side === "A" ? modelA : modelB));
+    const model = modelInfo?.id || modelA;
+    const endpoint = modelInfo?.endpoint || "chat";
     const addMsg = side === "A" ? addChatMessageA : addChatMessageB;
     const setLoading = side === "A" ? setLoadingA : setLoadingB;
     const setInput = side === "A" ? setInputA : setInputB;
