@@ -17,19 +17,17 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 async function streamChat(
   messages: Array<{ role: string; content: string }>,
-  model: string,
-  endpoint: string,
   onDelta: (text: string) => void,
   onDone: () => void,
   onError: (msg: string) => void,
 ) {
-  const resp = await fetch(`${SUPABASE_URL}/functions/v1/${endpoint}`, {
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/${MODEL.endpoint}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${SUPABASE_KEY}`,
     },
-    body: JSON.stringify({ messages, model }),
+    body: JSON.stringify({ messages, model: MODEL.id }),
   });
 
   if (!resp.ok) {
@@ -72,10 +70,8 @@ async function streamChat(
 }
 
 export function ChatArena() {
-  const [model, setModel] = useState(AI_MODELS[0].id);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [providerFilter, setProviderFilter] = useState<string>("all");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -85,11 +81,6 @@ export function ChatArena() {
     clearChatA: clearChat,
   } = useAppStore();
 
-  const filteredModels = providerFilter === "all" ? AI_MODELS : AI_MODELS.filter((m) => m.provider === providerFilter);
-  const providers = [...new Set(AI_MODELS.map((m) => m.provider))];
-  const modelInfo = AI_MODELS.find((m) => m.id === model);
-
-  // Auto-scroll on new messages
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -98,9 +89,6 @@ export function ChatArena() {
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
-
-    const info = AI_MODELS.find((m) => m.id === model);
-    const endpoint = info?.endpoint || "chat";
 
     const userMsg = {
       id: crypto.randomUUID(),
@@ -117,7 +105,7 @@ export function ChatArena() {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
-      model: model,
+      model: MODEL.id,
       timestamp: Date.now(),
     });
 
@@ -126,8 +114,6 @@ export function ChatArena() {
 
     await streamChat(
       msgs,
-      model,
-      endpoint,
       (chunk) => { accumulated += chunk; updateLastAssistant(accumulated); },
       () => setLoading(false),
       (err) => { toast.error(err); setLoading(false); },
@@ -141,43 +127,21 @@ export function ChatArena() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)] max-w-3xl mx-auto">
-      {/* Header controls */}
-      <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-border/50 mb-3">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="h-8 w-8 rounded-lg btn-gradient flex items-center justify-center shrink-0">
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-          <Select value={model} onValueChange={setModel}>
-            <SelectTrigger className="h-9 text-sm font-medium max-w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredModels.map((m) => (
-                <SelectItem key={m.id} value={m.id} className="text-sm">
-                  <span>{m.name}</span>
-                  <span className="text-muted-foreground ml-2 text-xs">• {m.provider}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Header */}
+      <div className="flex items-center gap-2 pb-3 border-b border-border/50 mb-3">
+        <div className="h-8 w-8 rounded-lg btn-gradient flex items-center justify-center shrink-0">
+          <Sparkles className="h-4 w-4 text-white" />
         </div>
-
-        <div className="flex items-center gap-1.5">
-          <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-          <Select value={providerFilter} onValueChange={setProviderFilter}>
-            <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {providers.map((p) => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={clearChat} title="Limpar conversa">
-            <RotateCcw className="h-3.5 w-3.5" />
-          </Button>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">{MODEL.name}</p>
+          <p className="text-[10px] text-muted-foreground">Rápido • Econômico • Eficiente</p>
         </div>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={clearChat} title="Limpar conversa">
+          <RotateCcw className="h-3.5 w-3.5" />
+        </Button>
       </div>
 
-      {/* Chat messages */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-4 scroll-smooth" ref={scrollRef}>
         {chatHistory.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-16">
@@ -187,7 +151,7 @@ export function ChatArena() {
             <div>
               <p className="text-lg font-semibold text-foreground">Olá! Como posso ajudar?</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Usando <span className="font-medium text-primary">{modelInfo?.name}</span> via {modelInfo?.provider}
+                Usando <span className="font-medium text-primary">{MODEL.name}</span>
               </p>
             </div>
           </div>
@@ -212,11 +176,9 @@ export function ChatArena() {
                   <Button variant="ghost" size="icon" className="h-6 w-6 opacity-50 hover:opacity-100" onClick={() => copyToClipboard(msg.content)}>
                     <Copy className="h-3 w-3" />
                   </Button>
-                  {msg.model && (
-                    <Badge variant="outline" className="text-[9px] h-5 ml-auto opacity-60">
-                      {AI_MODELS.find(m => m.id === msg.model)?.name || msg.model}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className="text-[9px] h-5 ml-auto opacity-60">
+                    {MODEL.name}
+                  </Badge>
                 </div>
               )}
             </div>
@@ -236,7 +198,7 @@ export function ChatArena() {
         )}
       </div>
 
-      {/* Input area */}
+      {/* Input */}
       <div className="flex gap-2 pt-3 mt-3 border-t border-border/50">
         <Textarea
           value={input}
