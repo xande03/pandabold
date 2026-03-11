@@ -106,7 +106,7 @@ serve(async (req) => {
 
     let inputText = text;
     if (text.startsWith("__PDF_BASE64__")) {
-      inputText = "O seguinte conteúdo é de um arquivo PDF (base64). Extraia e processe o texto: " + text.slice(14).substring(0, 50000);
+      inputText = "O conteúdo abaixo foi extraído de um documento PDF. Ignore caracteres estranhos, cabeçalhos/rodapés repetidos e números de página. Foque apenas no conteúdo textual real:\n\n" + text.slice(14).substring(0, 80000);
     }
 
     const systemPrompt = PROMPTS[type] || PROMPTS.resumo;
