@@ -27,6 +27,8 @@ const moduleComponents = {
   summarizer: TextSummarizer,
   signature: DigitalSignature,
   upscale: ImageUpscale,
+  bgremover: BackgroundRemover,
+  converter: ImageConverter,
 };
 
 const moduleTitles = {
