@@ -50,7 +50,6 @@ export function Gallery() {
   const typeIcon = (type: string) => {
     switch (type) {
       case "generated": case "edited": return <ImageIcon className="h-3 w-3" />;
-      case "video": return <Video className="h-3 w-3" />;
       case "qrcode": return <QrCode className="h-3 w-3" />;
       case "upscale": return <Maximize2 className="h-3 w-3" />;
       default: return null;
