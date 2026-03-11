@@ -60,7 +60,7 @@ export function Gallery() {
     switch (type) {
       case "generated": return "Gerada";
       case "edited": return "Editada";
-      case "video": return "Vídeo";
+      
       case "qrcode": return "QR Code";
       case "upscale": return "Upscale";
       default: return type;
