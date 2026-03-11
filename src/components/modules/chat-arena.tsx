@@ -53,11 +53,12 @@ type ChatMode = "battle" | "individual";
 async function streamChat(
   messages: Array<{ role: string; content: string }>,
   model: string,
+  endpoint: string,
   onDelta: (text: string) => void,
   onDone: () => void,
   onError: (msg: string) => void,
 ) {
-  const resp = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/${endpoint}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
