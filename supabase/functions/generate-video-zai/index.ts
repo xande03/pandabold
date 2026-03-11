@@ -58,7 +58,6 @@ serve(async (req) => {
         prompt,
         duration,
         resolution,
-        fps,
       }),
     });
 
