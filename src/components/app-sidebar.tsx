@@ -1,5 +1,5 @@
 import {
-  MessageSquare, ImageIcon, Paintbrush, Video, QrCode,
+  MessageSquare, ImageIcon, Paintbrush, QrCode,
   Music, FileText, PenTool, Maximize2, LayoutGrid,
   Eraser, FileType,
 } from "lucide-react";
