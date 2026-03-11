@@ -30,16 +30,6 @@ export interface EditedImage {
   timestamp: number;
 }
 
-export interface VideoTask {
-  id: string;
-  prompt: string;
-  model: string;
-  status: 'processing' | 'success' | 'fail';
-  progress: number;
-  frames: string[];
-  videoUrl?: string;
-  timestamp: number;
-}
 
 export interface QRCodeItem {
   id: string;
