@@ -113,7 +113,7 @@ async function streamChat(
 export function ChatArena() {
   const [mode, setMode] = useState<ChatMode>("battle");
   const [modelA, setModelA] = useState(AI_MODELS[0].id);
-  const [modelB, setModelB] = useState(AI_MODELS[5].id);
+  const [modelB, setModelB] = useState(AI_MODELS[7].id);
   const [inputA, setInputA] = useState("");
   const [inputB, setInputB] = useState("");
   const [loadingA, setLoadingA] = useState(false);
