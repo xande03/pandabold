@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.summarize-text]
 verify_jwt = false
+
+[functions.chat-zai]
+verify_jwt = false
+
+[functions.generate-image-zai]
+verify_jwt = false
