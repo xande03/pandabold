@@ -77,38 +77,31 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        try {
-          const fallbackImageUrl = await generateImageWithFallback(prompt, referenceImage);
-          return new Response(
-            JSON.stringify({
-              imageUrl: fallbackImageUrl,
-              fallbackUsed: true,
-              fallbackProvider: "Lovable AI",
-            }),
-            {
-              status: 200,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
-        } catch (fallbackError) {
-          console.error("Fallback image error:", fallbackError);
-          return new Response(JSON.stringify({
-            error: "Limite de requisições excedido. Tente novamente em instantes.",
-            code: 429,
-            retryable: true,
-          }), {
+      console.error("Z.ai image error:", response.status);
+      // Fallback to Lovable AI for ANY Z.ai error
+      try {
+        console.log(`Z.ai image failed (${response.status}), falling back to Lovable AI...`);
+        const fallbackImageUrl = await generateImageWithFallback(prompt, referenceImage);
+        return new Response(
+          JSON.stringify({
+            imageUrl: fallbackImageUrl,
+            fallbackUsed: true,
+            fallbackProvider: "Lovable AI",
+          }),
+          {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+          }
+        );
+      } catch (fallbackError) {
+        console.error("Fallback image error:", fallbackError);
+        return new Response(JSON.stringify({
+          error: "Erro na geração de imagem. Tente novamente.",
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-
-      const t = await response.text();
-      console.error("Z.ai image error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Erro na geração de imagem Z.ai" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
     const data = await response.json();
