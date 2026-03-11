@@ -9,9 +9,42 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, duration = 5, resolution = "1920x1080", fps = 30 } = await req.json();
+    const { prompt, duration = 5, resolution = "1920x1080", fps = 30, pollTaskId } = await req.json();
     const ZAI_API_KEY = Deno.env.get("ZAI_API_KEY");
     if (!ZAI_API_KEY) throw new Error("ZAI_API_KEY is not configured");
+
+    // Handle polling request
+    if (pollTaskId) {
+      const statusResponse = await fetch(`https://api.z.ai/api/paas/v4/async-result/${pollTaskId}`, {
+        headers: { Authorization: `Bearer ${ZAI_API_KEY}` },
+      });
+
+      if (!statusResponse.ok) {
+        return new Response(JSON.stringify({ status: "processing" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const statusData = await statusResponse.json();
+      if (statusData.task_status === "SUCCESS") {
+        const videoUrl = statusData.video_result?.[0]?.url;
+        const coverUrl = statusData.video_result?.[0]?.cover_image_url;
+        return new Response(
+          JSON.stringify({ videoUrl, coverUrl, provider: "Z.ai" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (statusData.task_status === "FAIL") {
+        return new Response(JSON.stringify({ error: "Geração falhou." }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ status: "processing" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Step 1: Submit video generation task
     const submitResponse = await fetch("https://api.z.ai/api/paas/v4/videos/generations", {
