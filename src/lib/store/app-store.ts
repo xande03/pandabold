@@ -137,11 +137,6 @@ export const useAppStore = create<AppState>((set) => ({
   editedImages: [],
   addEditedImage: (img) => set((s) => ({ editedImages: [img, ...s.editedImages] })),
   
-  videoTasks: [],
-  addVideoTask: (task) => set((s) => ({ videoTasks: [task, ...s.videoTasks] })),
-  updateVideoTask: (id, updates) => set((s) => ({
-    videoTasks: s.videoTasks.map((t) => t.id === id ? { ...t, ...updates } : t),
-  })),
   
   qrCodes: [],
   setQRCodes: (qrs) => set({ qrCodes: qrs }),

@@ -29,7 +29,7 @@ const modules: { id: ModuleId; label: string; description: string; icon: React.E
   { id: "music", label: "Music DNA", description: "Análise profunda de áudio", icon: Music, color: "text-rose-500" },
   { id: "summarizer", label: "Resumidor IA", description: "Resumos e flashcards", icon: FileText, color: "text-purple-500" },
   { id: "signature", label: "Assinatura", description: "Criar assinatura digital", icon: PenTool, color: "text-green-500" },
-  { id: "video", label: "Geração de Vídeos", description: "Criar vídeos com IA", icon: Video, color: "text-sky-500" },
+  
   { id: "bgremover", label: "Remover Fundo", description: "Remoção inteligente de fundo", icon: Eraser, color: "text-pink-500" },
   { id: "converter", label: "Conversor", description: "Converter formato e tamanho", icon: FileType, color: "text-cyan-500" },
   { id: "gallery", label: "Galeria", description: "Todas as suas criações", icon: LayoutGrid, color: "text-orange-500" },
