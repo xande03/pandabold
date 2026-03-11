@@ -95,9 +95,6 @@ interface AppState {
   editedImages: EditedImage[];
   addEditedImage: (img: EditedImage) => void;
   
-  videoTasks: VideoTask[];
-  addVideoTask: (task: VideoTask) => void;
-  updateVideoTask: (id: string, updates: Partial<VideoTask>) => void;
   
   qrCodes: QRCodeItem[];
   setQRCodes: (qrs: QRCodeItem[]) => void;
