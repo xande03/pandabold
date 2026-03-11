@@ -10,7 +10,7 @@ import { useAppStore } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const MODEL = { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", endpoint: "chat" };
+const MODEL = { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Groq)", endpoint: "chat-groq" };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
