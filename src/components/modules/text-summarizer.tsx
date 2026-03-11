@@ -193,6 +193,7 @@ function SummaryRenderer({ text }: { text: string }) {
 export function TextSummarizer() {
   const [inputText, setInputText] = useState("");
   const [outputType, setOutputType] = useState<OutputType>("resumo");
+  const [summarizerModel, setSummarizerModel] = useState(SUMMARIZER_MODELS[0].id);
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
