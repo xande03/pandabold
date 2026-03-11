@@ -53,15 +53,46 @@ RESPOSTA: [resposta completa, autoexplicativa, com contexto suficiente para ser 
 - Responda em português brasileiro.`,
 };
 
+interface ProviderConfig {
+  url: string;
+  apiKey: string;
+  model: string;
+  headers?: Record<string, string>;
+}
+
+function getProviderConfig(provider: string, model?: string): ProviderConfig {
+  if (provider === "openrouter") {
+    const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+    if (!apiKey) throw new Error("OPENROUTER_API_KEY não configurada");
+    return {
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      apiKey,
+      model: model || "deepseek/deepseek-chat-v3-0324",
+      headers: {
+        "HTTP-Referer": "https://pandabold.lovable.app",
+        "X-Title": "Panda Bold",
+      },
+    };
+  }
+
+  // Default: Lovable AI
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
+  return {
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    apiKey,
+    model: model || "google/gemini-2.5-pro",
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { text, type } = await req.json();
+    const { text, type, provider, model } = await req.json();
     if (!text) throw new Error("Texto não fornecido");
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
+    const config = getProviderConfig(provider || "lovable", model);
 
     let inputText = text;
     if (text.startsWith("__PDF_BASE64__")) {
@@ -70,14 +101,15 @@ serve(async (req) => {
 
     const systemPrompt = PROMPTS[type] || PROMPTS.resumo;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(config.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
+        ...(config.headers || {}),
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: config.model,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: inputText.substring(0, 100000) },
