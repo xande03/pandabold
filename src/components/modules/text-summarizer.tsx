@@ -19,11 +19,11 @@ import { cn } from "@/lib/utils";
 const SUMMARIZE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/summarize-text`;
 
 const SUMMARIZER_MODELS = [
-  { id: "gemini-pro", name: "Gemini 2.5 Pro", provider: "lovable", model: "google/gemini-2.5-pro" },
+  { id: "gemini-flash-lite", name: "Gemini 2.5 Flash Lite ⚡", provider: "lovable", model: "google/gemini-2.5-flash-lite" },
   { id: "gemini-flash", name: "Gemini 2.5 Flash", provider: "lovable", model: "google/gemini-2.5-flash" },
+  { id: "gemini-pro", name: "Gemini 2.5 Pro", provider: "lovable", model: "google/gemini-2.5-pro" },
+  { id: "gpt-5-nano", name: "GPT-5 Nano ⚡", provider: "lovable", model: "openai/gpt-5-nano" },
   { id: "deepseek-v3", name: "DeepSeek V3", provider: "openrouter", model: "deepseek/deepseek-chat-v3-0324" },
-  { id: "llama-4-maverick", name: "Llama 4 Maverick", provider: "openrouter", model: "meta-llama/llama-4-maverick" },
-  { id: "qwen-72b", name: "Qwen 2.5 72B", provider: "openrouter", model: "qwen/qwen-2.5-72b-instruct" },
 ];
 
 type OutputType = "resumo" | "pontos-chave" | "flashcards";

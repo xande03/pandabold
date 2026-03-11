@@ -43,9 +43,9 @@ import { GenerationLoading } from "@/components/ui/generation-loading";
 import { supabase } from "@/integrations/supabase/client";
 
 const IMAGE_MODELS = [
-  { id: "glm-image", name: "GLM-Image (Z.ai)", tier: "Padrão", provider: "zai" },
-  { id: "google/gemini-3-pro-image-preview", name: "Nano Banana Pro", tier: "Pro", provider: "lovable" },
-  { id: "google/gemini-2.5-flash-image", name: "Nano Banana", tier: "Rápido", provider: "lovable" },
+  { id: "glm-image", name: "GLM-Image (Z.ai)", tier: "Econômico", provider: "zai" },
+  { id: "google/gemini-3.1-flash-image-preview", name: "Gemini 3.1 Flash Image", tier: "Rápido", provider: "lovable" },
+  { id: "google/gemini-3-pro-image-preview", name: "Gemini 3 Pro Image", tier: "Pro", provider: "lovable" },
 ];
 
 const SIZES = [
@@ -132,7 +132,7 @@ export function ImageLab() {
             : {
                 prompt: finalPrompt,
                 referenceImage: referenceImage || undefined,
-                model: isZai ? "google/gemini-3-pro-image-preview" : model,
+                model: isZai ? "google/gemini-3.1-flash-image-preview" : model,
               },
         }
       );

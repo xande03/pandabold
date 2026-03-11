@@ -232,7 +232,7 @@ export function VideoStudio() {
           <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
             <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
             <p className="text-[10px] text-muted-foreground">
-              Modelo <span className="font-medium text-primary">CogVideoX-2</span> via Z.ai com fallback automático
+              Modelo <span className="font-medium text-primary">CogVideoX-3</span> via Z.ai • Fallback: <span className="font-medium text-primary">Gemini 3.1 Flash Image</span>
             </p>
           </div>
         </CardContent>
