@@ -6,51 +6,61 @@ const corsHeaders = {
 };
 
 const PROMPTS: Record<string, string> = {
-  resumo: `Você é um especialista em análise e síntese de textos. Resuma o texto a seguir de forma detalhada e profissional.
+  resumo: `Você é um especialista em análise e síntese de textos. Sua tarefa é ler cuidadosamente o texto/documento fornecido e criar um resumo CONCISO e bem estruturado.
 
-REGRAS OBRIGATÓRIAS:
-- Comece com um parágrafo de contextualização explicando do que se trata o texto, quem é o autor (se mencionado), qual é o tema central e a relevância do assunto.
-- Use subtítulos em negrito (**Subtítulo**) em linhas separadas para dividir o resumo em seções temáticas claras.
-- Dentro de cada seção, escreva em parágrafos contínuos e bem estruturados (NUNCA use bullet points ou listas).
-- Preserve dados, números, porcentagens, datas, nomes e citações relevantes do texto original — não generalize quando houver informação específica.
-- Mantenha coerência e fluidez entre os parágrafos e seções.
-- Use linguagem formal e precisa.
-- Termine com uma seção **Síntese Final** que condense os pontos mais críticos em um parágrafo conclusivo.
-- O resumo deve cobrir todos os pontos principais do texto original sem omissões significativas.
-- Responda em português brasileiro.`,
+INSTRUÇÕES:
+1. Primeiro, leia e compreenda TODO o conteúdo fornecido, identificando o tema central, contexto e pontos principais.
+2. Se o texto parecer ser de um PDF ou documento formatado, ignore caracteres estranhos, cabeçalhos repetidos, números de página, etc. Foque no conteúdo real.
 
-  "pontos-chave": `Você é um especialista em análise de conteúdo. Extraia os pontos-chave do texto a seguir.
+REGRAS DE FORMATAÇÃO:
+- Comece com um parágrafo curto de contextualização (2-3 frases): do que se trata, quem é o autor (se mencionado), e qual a relevância.
+- Use subtítulos em negrito (**Subtítulo**) em linhas separadas para dividir o resumo em seções temáticas.
+- Dentro de cada seção, escreva parágrafos curtos e objetivos (NÃO use bullet points ou listas).
+- Preserve dados específicos: números, porcentagens, datas, nomes e citações relevantes.
+- Seja CONCISO: cada parágrafo deve ter no máximo 3-4 frases. Elimine redundâncias.
+- Termine com uma seção **Síntese Final** com um parágrafo conclusivo de no máximo 3 frases.
+- Responda SEMPRE em português brasileiro.
+- Se o texto estiver em outro idioma, traduza o resumo para português brasileiro.`,
 
-REGRAS OBRIGATÓRIAS DE FORMATAÇÃO:
-- Comece com um parágrafo de contexto geral (2-3 frases) explicando o tema do texto e sua relevância. Este parágrafo deve vir ANTES de qualquer categoria e NÃO deve ter título/negrito.
-- Depois do contexto, organize os pontos por categorias temáticas em ordem de importância (pontos mais críticos primeiro).
-- Cada categoria deve ter um título em negrito usando ** (ex: **Categoria**)
-- Abaixo de cada categoria, liste os pontos no formato: "• **Título do Ponto** — Descrição detalhada com no mínimo 1-2 frases completas explicando o ponto, seu impacto e contexto."
-- Cada descrição deve ser autoexplicativa — o leitor deve entender o ponto sem precisar ler o texto original.
-- Quando relevante, mencione relações entre pontos (ex: "Este ponto se conecta diretamente com..." ou "Em contraste com o ponto anterior...").
-- Cubra todos os aspectos importantes do texto.
-- Use entre 5 a 15 pontos dependendo da extensão do texto.
-- Responda em português brasileiro.`,
+  "pontos-chave": `Você é um especialista em análise de conteúdo. Sua tarefa é extrair os pontos-chave do texto/documento fornecido em formato de TÓPICOS claros e organizados.
 
-  flashcards: `Você é um especialista em criar material de estudo. Crie flashcards baseados no conteúdo do texto a seguir.
+INSTRUÇÕES:
+1. Leia e compreenda TODO o conteúdo, mesmo que pareça mal formatado (PDF, OCR, etc.).
+2. Identifique os pontos mais importantes e organize-os hierarquicamente.
 
-REGRAS OBRIGATÓRIAS DE FORMATAÇÃO:
-- O PRIMEIRO flashcard DEVE ser uma visão geral do tema, com a pergunta "Qual é o tema central deste conteúdo?" e uma resposta que sintetize o assunto.
-- Crie entre 5 a 20 flashcards dependendo da extensão do conteúdo.
+REGRAS DE FORMATAÇÃO:
+- Comece com 1-2 frases de contexto geral sobre o tema (SEM título/negrito neste parágrafo inicial).
+- Organize os pontos por categorias temáticas com títulos em negrito: **Categoria**
+- Abaixo de cada categoria, liste os pontos como tópicos:
+  • **Título do Ponto** — Explicação clara e direta em 1-2 frases.
+- Cada tópico deve ser autoexplicativo — o leitor deve entender sem ler o texto original.
+- Use entre 5 a 12 pontos, priorizando os mais relevantes.
+- Ordene do mais importante para o menos importante.
+- Responda SEMPRE em português brasileiro.
+- Se o texto estiver em outro idioma, traduza para português brasileiro.`,
+
+  flashcards: `Você é um especialista em criar material de estudo. Sua tarefa é criar flashcards de estudo baseados no conteúdo do texto/documento fornecido.
+
+INSTRUÇÕES:
+1. Leia e compreenda TODO o conteúdo fornecido, ignorando problemas de formatação.
+2. Identifique os conceitos, fatos e relações mais importantes para transformar em flashcards.
+
+REGRAS DE FORMATAÇÃO (SIGA EXATAMENTE):
+- O PRIMEIRO flashcard deve ser sobre o tema central: "Qual é o tema central deste conteúdo?"
+- Crie entre 5 a 15 flashcards dependendo da extensão.
 - Cada flashcard DEVE seguir EXATAMENTE este formato:
-[Nível] PERGUNTA: [pergunta clara e específica sobre o conteúdo]
-RESPOSTA: [resposta completa, autoexplicativa, com contexto suficiente para ser compreendida sem ler a pergunta novamente]
 
-- O [Nível] deve ser um destes: [Básico], [Intermediário] ou [Avançado]
-  - [Básico]: definições, fatos, conceitos fundamentais
-  - [Intermediário]: relações causa-efeito, comparações, análises
-  - [Avançado]: aplicação prática, síntese de múltiplos conceitos, pensamento crítico
+[Nível] PERGUNTA: [pergunta clara e específica]
+RESPOSTA: [resposta completa e autoexplicativa]
 
 - Separe cada flashcard com uma linha em branco.
-- Varie os tipos de perguntas: definição, causa-efeito, comparação, aplicação prática.
-- As respostas devem ser precisas, completas e baseadas exclusivamente no conteúdo fornecido.
-- Distribua os níveis de dificuldade: ~40% Básico, ~40% Intermediário, ~20% Avançado.
-- Responda em português brasileiro.`,
+- Níveis de dificuldade:
+  [Básico] = definições, fatos, conceitos fundamentais (~40%)
+  [Intermediário] = relações causa-efeito, comparações (~40%)
+  [Avançado] = aplicação prática, síntese, pensamento crítico (~20%)
+- Varie os tipos: definição, causa-efeito, comparação, aplicação.
+- As respostas devem ser baseadas EXCLUSIVAMENTE no conteúdo fornecido.
+- Responda SEMPRE em português brasileiro.`,
 };
 
 interface ProviderConfig {
@@ -96,7 +106,7 @@ serve(async (req) => {
 
     let inputText = text;
     if (text.startsWith("__PDF_BASE64__")) {
-      inputText = "O seguinte conteúdo é de um arquivo PDF (base64). Extraia e processe o texto: " + text.slice(14).substring(0, 50000);
+      inputText = "O conteúdo abaixo foi extraído de um documento PDF. Ignore caracteres estranhos, cabeçalhos/rodapés repetidos e números de página. Foque apenas no conteúdo textual real:\n\n" + text.slice(14).substring(0, 80000);
     }
 
     const systemPrompt = PROMPTS[type] || PROMPTS.resumo;
