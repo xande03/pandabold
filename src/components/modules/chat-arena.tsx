@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const AI_MODELS = [
+  { id: "glm-5", name: "GLM-5", provider: "Z.ai", endpoint: "chat-zai" },
+  { id: "glm-4-plus", name: "GLM-4 Plus", provider: "Z.ai", endpoint: "chat-zai" },
   { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "Google", endpoint: "chat" },
   { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", endpoint: "chat" },
   { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", provider: "Google", endpoint: "chat" },
