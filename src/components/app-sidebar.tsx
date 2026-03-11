@@ -1,6 +1,7 @@
 import {
   MessageSquare, ImageIcon, Paintbrush, Video, QrCode,
   Music, FileText, PenTool, Maximize2, LayoutGrid,
+  Eraser, FileType,
 } from "lucide-react";
 import { useAppStore, type ModuleId } from "@/lib/store/app-store";
 import { ThemeToggle } from "@/components/theme-toggle";
