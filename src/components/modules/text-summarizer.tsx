@@ -345,6 +345,22 @@ export function TextSummarizer() {
               <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
             </TabsList>
           </Tabs>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Modelo de IA</label>
+            <Select value={summarizerModel} onValueChange={setSummarizerModel}>
+              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SUMMARIZER_MODELS.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    <div className="flex items-center gap-2">
+                      {m.name}
+                      <Badge variant="outline" className="text-[10px] h-4">{m.provider === "openrouter" ? "OpenRouter" : "Lovable"}</Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button onClick={handleGenerate} disabled={loading || !inputText.trim()} className="w-full btn-gradient">
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
             {loading ? "Gerando..." : "Gerar"}
