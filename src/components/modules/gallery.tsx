@@ -40,7 +40,7 @@ export function Gallery() {
       id: img.id, type: "upscale" as const, url: img.upscaledUrl,
       label: img.description, model: img.scale, timestamp: img.timestamp,
     })),
-  ], [generatedImages, editedImages, videoTasks, qrCodes, upscaledImages]);
+  ], [generatedImages, editedImages, qrCodes, upscaledImages]);
 
   const filtered = useMemo(() => {
     const items = filter === "all" ? allItems : allItems.filter((i) => i.type === filter);
