@@ -54,10 +54,10 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "cogvideox-2",
+        model: "cogvideox-3",
         prompt,
-        duration,
-        resolution,
+        quality: "speed",
+        size: resolution,
       }),
     });
 
