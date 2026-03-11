@@ -28,8 +28,12 @@ serve(async (req) => {
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições Z.ai excedido." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({
+          error: "Limite de requisições Z.ai excedido. Tente novamente em instantes.",
+          code: 429,
+          retryable: true,
+        }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
