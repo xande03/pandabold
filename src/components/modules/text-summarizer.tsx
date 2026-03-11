@@ -26,6 +26,8 @@ const SUMMARIZER_MODELS = [
   { id: "qwen-72b", name: "Qwen 2.5 72B", provider: "openrouter", model: "qwen/qwen-2.5-72b-instruct" },
 ];
 
+type OutputType = "resumo" | "pontos-chave" | "flashcards";
+
 /* ── Flashcard Grid ── */
 function FlashcardGrid({ text }: { text: string }) {
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});
