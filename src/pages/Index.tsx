@@ -11,6 +11,8 @@ import { Gallery } from "@/components/modules/gallery";
 import { TextSummarizer } from "@/components/modules/text-summarizer";
 import { DigitalSignature } from "@/components/modules/digital-signature";
 import { ImageUpscale } from "@/components/modules/image-upscale";
+import { BackgroundRemover } from "@/components/modules/background-remover";
+import { ImageConverter } from "@/components/modules/image-converter";
 import { useAppStore } from "@/lib/store/app-store";
 import { motion, AnimatePresence } from "framer-motion";
 
