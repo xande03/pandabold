@@ -64,30 +64,26 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        try {
-          const fallbackResponse = await streamFallbackChat(messages || []);
-          return new Response(fallbackResponse.body, {
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "text/event-stream",
-              "x-fallback-used": "true",
-            },
-          });
-        } catch (fallbackError) {
-          console.error("Fallback chat error:", fallbackError);
-          return new Response(JSON.stringify({ error: "Limite de requisições Z.ai excedido." }), {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+      console.error("Z.ai error:", response.status);
+      // Fallback to Lovable AI for ANY Z.ai error (429, 500, etc.)
+      try {
+        console.log(`Z.ai failed (${response.status}), falling back to Lovable AI...`);
+        const fallbackResponse = await streamFallbackChat(messages || []);
+        return new Response(fallbackResponse.body, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/event-stream",
+            "x-fallback-used": "true",
+            "x-original-error": String(response.status),
+          },
+        });
+      } catch (fallbackError) {
+        console.error("Fallback chat error:", fallbackError);
+        return new Response(JSON.stringify({ error: "Erro na IA. Tente novamente em instantes." }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-
-      const t = await response.text();
-      console.error("Z.ai error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Erro na API Z.ai" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
     return new Response(response.body, {
