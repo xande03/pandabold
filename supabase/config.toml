@@ -3,6 +3,12 @@ project_id = "hrdbdoovgvjtteeyowoi"
 [functions.chat]
 verify_jwt = false
 
+[functions.chat-groq]
+verify_jwt = false
+
+[functions.chat-openrouter]
+verify_jwt = false
+
 [functions.generate-image]
 verify_jwt = false
 

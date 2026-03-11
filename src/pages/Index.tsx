@@ -11,6 +11,8 @@ import { Gallery } from "@/components/modules/gallery";
 import { TextSummarizer } from "@/components/modules/text-summarizer";
 import { DigitalSignature } from "@/components/modules/digital-signature";
 import { ImageUpscale } from "@/components/modules/image-upscale";
+import { BackgroundRemover } from "@/components/modules/background-remover";
+import { ImageConverter } from "@/components/modules/image-converter";
 import { useAppStore } from "@/lib/store/app-store";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -25,6 +27,8 @@ const moduleComponents = {
   summarizer: TextSummarizer,
   signature: DigitalSignature,
   upscale: ImageUpscale,
+  bgremover: BackgroundRemover,
+  converter: ImageConverter,
 };
 
 const moduleTitles = {
@@ -38,6 +42,8 @@ const moduleTitles = {
   summarizer: "Resumidor de Texto",
   signature: "Assinatura Digital",
   upscale: "Upscale de Imagem",
+  bgremover: "Remover Fundo",
+  converter: "Conversor de Imagem",
 };
 
 const Index = () => {
