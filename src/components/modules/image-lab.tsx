@@ -116,17 +116,24 @@ export function ImageLab() {
         ? CREATION_MODELS.find((m) => m.id === selectedCreationModel)
         : null;
 
+      // Z.ai image API doesn't support reference images natively.
+      // When a reference image is provided, always use Lovable AI (Gemini) which supports image input.
+      const useZai = isZai && !referenceImage;
+
       const { data, error } = await supabase.functions.invoke(
-        isZai ? "generate-image-zai" : "generate-image",
+        useZai ? "generate-image-zai" : "generate-image",
         {
-          body: isZai
+          body: useZai
             ? {
                 prompt: finalPrompt,
                 size,
                 creationMode: creationModelData?.name || undefined,
-                referenceImage: referenceImage || undefined,
               }
-            : { prompt: finalPrompt, referenceImage: referenceImage || undefined, model },
+            : {
+                prompt: finalPrompt,
+                referenceImage: referenceImage || undefined,
+                model: isZai ? "google/gemini-3-pro-image-preview" : model,
+              },
         }
       );
 
