@@ -91,7 +91,7 @@ export function Gallery() {
             <SelectItem value="edited">Imagens editadas ({countByType("edited")})</SelectItem>
             <SelectItem value="qrcode">QR Codes ({countByType("qrcode")})</SelectItem>
             <SelectItem value="upscale">Upscale ({countByType("upscale")})</SelectItem>
-            <SelectItem value="video">Vídeos ({countByType("video")})</SelectItem>
+            
           </SelectContent>
         </Select>
         <Select value={sort} onValueChange={(v) => setSort(v as SortOrder)}>
