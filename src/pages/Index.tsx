@@ -42,6 +42,8 @@ const moduleTitles = {
   summarizer: "Resumidor de Texto",
   signature: "Assinatura Digital",
   upscale: "Upscale de Imagem",
+  bgremover: "Remover Fundo",
+  converter: "Conversor de Imagem",
 };
 
 const Index = () => {
