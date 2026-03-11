@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ModuleId = 'chat' | 'image' | 'editor' | 'video' | 'qrcode' | 'music' | 'gallery' | 'summarizer' | 'signature' | 'upscale' | 'bgremover' | 'converter';
+export type ModuleId = 'chat' | 'image' | 'editor' | 'qrcode' | 'music' | 'gallery' | 'summarizer' | 'signature' | 'upscale' | 'bgremover' | 'converter';
 
 export interface ChatMessage {
   id: string;
@@ -30,16 +30,6 @@ export interface EditedImage {
   timestamp: number;
 }
 
-export interface VideoTask {
-  id: string;
-  prompt: string;
-  model: string;
-  status: 'processing' | 'success' | 'fail';
-  progress: number;
-  frames: string[];
-  videoUrl?: string;
-  timestamp: number;
-}
 
 export interface QRCodeItem {
   id: string;
@@ -105,9 +95,6 @@ interface AppState {
   editedImages: EditedImage[];
   addEditedImage: (img: EditedImage) => void;
   
-  videoTasks: VideoTask[];
-  addVideoTask: (task: VideoTask) => void;
-  updateVideoTask: (id: string, updates: Partial<VideoTask>) => void;
   
   qrCodes: QRCodeItem[];
   setQRCodes: (qrs: QRCodeItem[]) => void;
@@ -150,11 +137,6 @@ export const useAppStore = create<AppState>((set) => ({
   editedImages: [],
   addEditedImage: (img) => set((s) => ({ editedImages: [img, ...s.editedImages] })),
   
-  videoTasks: [],
-  addVideoTask: (task) => set((s) => ({ videoTasks: [task, ...s.videoTasks] })),
-  updateVideoTask: (id, updates) => set((s) => ({
-    videoTasks: s.videoTasks.map((t) => t.id === id ? { ...t, ...updates } : t),
-  })),
   
   qrCodes: [],
   setQRCodes: (qrs) => set({ qrCodes: qrs }),

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import {
-  LayoutGrid, ImageIcon, Video, QrCode, Download, Eye,
+  LayoutGrid, ImageIcon, QrCode, Download, Eye,
   Filter, Maximize2, ArrowUpDown,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,14 +14,14 @@ import {
 } from "@/components/ui/dialog";
 import { useAppStore } from "@/lib/store/app-store";
 
-type GalleryFilter = "all" | "generated" | "edited" | "qrcode" | "upscale" | "video";
+type GalleryFilter = "all" | "generated" | "edited" | "qrcode" | "upscale";
 type SortOrder = "newest" | "oldest";
 
 export function Gallery() {
   const [filter, setFilter] = useState<GalleryFilter>("all");
   const [sort, setSort] = useState<SortOrder>("newest");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { generatedImages, editedImages, videoTasks, qrCodes, upscaledImages } = useAppStore();
+  const { generatedImages, editedImages, qrCodes, upscaledImages } = useAppStore();
 
   const allItems = useMemo(() => [
     ...generatedImages.map((img) => ({
@@ -32,10 +32,6 @@ export function Gallery() {
       id: img.id, type: "edited" as const, url: img.editedUrl,
       label: img.prompt, model: img.operation, timestamp: img.timestamp,
     })),
-    ...videoTasks.filter((v) => v.status === "success" && v.videoUrl).map((v) => ({
-      id: v.id, type: "video" as const, url: v.videoUrl!,
-      label: v.prompt, model: v.model, timestamp: v.timestamp,
-    })),
     ...qrCodes.map((qr) => ({
       id: qr.id, type: "qrcode" as const, url: qr.qrUrl,
       label: qr.content, model: qr.type, timestamp: qr.timestamp,
@@ -44,7 +40,7 @@ export function Gallery() {
       id: img.id, type: "upscale" as const, url: img.upscaledUrl,
       label: img.description, model: img.scale, timestamp: img.timestamp,
     })),
-  ], [generatedImages, editedImages, videoTasks, qrCodes, upscaledImages]);
+  ], [generatedImages, editedImages, qrCodes, upscaledImages]);
 
   const filtered = useMemo(() => {
     const items = filter === "all" ? allItems : allItems.filter((i) => i.type === filter);
@@ -54,7 +50,6 @@ export function Gallery() {
   const typeIcon = (type: string) => {
     switch (type) {
       case "generated": case "edited": return <ImageIcon className="h-3 w-3" />;
-      case "video": return <Video className="h-3 w-3" />;
       case "qrcode": return <QrCode className="h-3 w-3" />;
       case "upscale": return <Maximize2 className="h-3 w-3" />;
       default: return null;
@@ -65,7 +60,7 @@ export function Gallery() {
     switch (type) {
       case "generated": return "Gerada";
       case "edited": return "Editada";
-      case "video": return "Vídeo";
+      
       case "qrcode": return "QR Code";
       case "upscale": return "Upscale";
       default: return type;
@@ -96,7 +91,7 @@ export function Gallery() {
             <SelectItem value="edited">Imagens editadas ({countByType("edited")})</SelectItem>
             <SelectItem value="qrcode">QR Codes ({countByType("qrcode")})</SelectItem>
             <SelectItem value="upscale">Upscale ({countByType("upscale")})</SelectItem>
-            <SelectItem value="video">Vídeos ({countByType("video")})</SelectItem>
+            
           </SelectContent>
         </Select>
         <Select value={sort} onValueChange={(v) => setSort(v as SortOrder)}>
