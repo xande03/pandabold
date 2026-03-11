@@ -32,10 +32,6 @@ export function Gallery() {
       id: img.id, type: "edited" as const, url: img.editedUrl,
       label: img.prompt, model: img.operation, timestamp: img.timestamp,
     })),
-    ...videoTasks.filter((v) => v.status === "success" && v.videoUrl).map((v) => ({
-      id: v.id, type: "video" as const, url: v.videoUrl!,
-      label: v.prompt, model: v.model, timestamp: v.timestamp,
-    })),
     ...qrCodes.map((qr) => ({
       id: qr.id, type: "qrcode" as const, url: qr.qrUrl,
       label: qr.content, model: qr.type, timestamp: qr.timestamp,
