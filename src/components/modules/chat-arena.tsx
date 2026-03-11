@@ -1,43 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import {
-  MessageSquare, Send, Copy, RotateCcw, Filter, Loader2, Bot, User,
+  MessageSquare, Send, Copy, RotateCcw, Loader2, Bot, User,
   Sparkles,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { useAppStore } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const AI_MODELS = [
-  { id: "glm-4-flash-250414", name: "GLM-4 Flash ⚡", provider: "Z.ai (Grátis)", endpoint: "chat-zai" },
-  { id: "glm-4.5-flash", name: "GLM-4.5 Flash ⚡", provider: "Z.ai (Grátis)", endpoint: "chat-zai" },
-  { id: "glm-5", name: "GLM-5", provider: "Z.ai", endpoint: "chat-zai" },
-  { id: "glm-4-plus", name: "GLM-4 Plus", provider: "Z.ai", endpoint: "chat-zai" },
-  { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite ⚡", provider: "Lovable AI", endpoint: "chat" },
-  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Lovable AI", endpoint: "chat" },
-  { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "Lovable AI", endpoint: "chat" },
-  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "Lovable AI", endpoint: "chat" },
-  { id: "google/gemini-3.1-pro-preview", name: "Gemini 3.1 Pro", provider: "Lovable AI", endpoint: "chat" },
-  { id: "openai/gpt-5-nano", name: "GPT-5 Nano ⚡", provider: "Lovable AI", endpoint: "chat" },
-  { id: "openai/gpt-5-mini", name: "GPT-5 Mini", provider: "Lovable AI", endpoint: "chat" },
-  { id: "openai/gpt-5", name: "GPT-5", provider: "Lovable AI", endpoint: "chat" },
-  { id: "openai/gpt-5.2", name: "GPT-5.2", provider: "Lovable AI", endpoint: "chat" },
-  { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B ⚡", provider: "Groq", endpoint: "chat-groq" },
-  { id: "gemma2-9b-it", name: "Gemma 2 9B ⚡", provider: "Groq", endpoint: "chat-groq" },
-  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", provider: "Groq", endpoint: "chat-groq" },
-  { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", provider: "Groq", endpoint: "chat-groq" },
-  { id: "deepseek/deepseek-chat-v3-0324", name: "DeepSeek V3", provider: "OpenRouter", endpoint: "chat-openrouter" },
-  { id: "meta-llama/llama-4-scout", name: "Llama 4 Scout", provider: "OpenRouter", endpoint: "chat-openrouter" },
-  { id: "meta-llama/llama-4-maverick", name: "Llama 4 Maverick", provider: "OpenRouter", endpoint: "chat-openrouter" },
-  { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B", provider: "OpenRouter", endpoint: "chat-openrouter" },
-];
+const MODEL = { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", endpoint: "chat" };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
