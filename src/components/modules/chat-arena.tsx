@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const AI_MODELS = [
+  { id: "glm-4.7-flash", name: "GLM-4.7 Flash ⚡", provider: "Z.ai (Grátis)", endpoint: "chat-zai" },
+  { id: "glm-4.5-flash", name: "GLM-4.5 Flash ⚡", provider: "Z.ai (Grátis)", endpoint: "chat-zai" },
   { id: "glm-5", name: "GLM-5", provider: "Z.ai", endpoint: "chat-zai" },
   { id: "glm-4-plus", name: "GLM-4 Plus", provider: "Z.ai", endpoint: "chat-zai" },
   { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "Google", endpoint: "chat" },
@@ -111,7 +113,7 @@ async function streamChat(
 export function ChatArena() {
   const [mode, setMode] = useState<ChatMode>("battle");
   const [modelA, setModelA] = useState(AI_MODELS[0].id);
-  const [modelB, setModelB] = useState(AI_MODELS[5].id);
+  const [modelB, setModelB] = useState(AI_MODELS[7].id);
   const [inputA, setInputA] = useState("");
   const [inputB, setInputB] = useState("");
   const [loadingA, setLoadingA] = useState(false);
