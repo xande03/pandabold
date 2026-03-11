@@ -20,7 +20,7 @@ const moduleComponents = {
   chat: ChatArena,
   image: ImageLab,
   editor: ImageEditor,
-  video: VideoStudio,
+  
   qrcode: QRCodeGenerator,
   music: MusicDNA,
   gallery: Gallery,
