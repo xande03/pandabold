@@ -20,24 +20,87 @@ serve(async (req) => {
     const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
     if (!apiKey) throw new Error("GOOGLE_AI_API_KEY is not configured");
 
+    // Try Imagen 3 first (dedicated image generation model)
+    const imagenResult = await generateWithImagen(apiKey, prompt);
+    if (imagenResult) {
+      return new Response(JSON.stringify({ imageUrl: imagenResult }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Fallback: try Gemini with image generation capability
+    const geminiResult = await generateWithGemini(apiKey, prompt, referenceImage);
+    if (geminiResult) {
+      return new Response(JSON.stringify({ imageUrl: geminiResult }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: "Nenhuma imagem retornada" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("generate-image-google error:", e);
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
+
+async function generateWithImagen(apiKey: string, prompt: string): Promise<string | null> {
+  try {
+    console.log("Trying Imagen 3...");
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instances: [{ prompt }],
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: "1:1",
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn(`Imagen 3 error [${response.status}]:`, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    const imageBytes = data.predictions?.[0]?.bytesBase64Encoded;
+    if (imageBytes) {
+      console.log("Image generated via Imagen 3");
+      return `data:image/png;base64,${imageBytes}`;
+    }
+    return null;
+  } catch (e) {
+    console.warn("Imagen 3 failed:", e);
+    return null;
+  }
+}
+
+async function generateWithGemini(apiKey: string, prompt: string, referenceImage?: string): Promise<string | null> {
+  try {
+    console.log("Trying Gemini image generation...");
     const parts: any[] = [{ text: prompt }];
+    
     if (referenceImage) {
-      // Extract base64 data from data URL
       const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
         parts.push({
-          inlineData: {
-            mimeType: match[1],
-            data: match[2],
-          },
+          inlineData: { mimeType: match[1], data: match[2] },
         });
       }
     }
 
-    console.log("Generating image with Google AI (Gemini)");
-
+    // Use gemini-2.0-flash-preview-image-generation which supports image output
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,51 +115,23 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Google AI error [${response.status}]:`, errorText);
-
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em instantes." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(JSON.stringify({ error: "Erro na geração de imagem via Google AI" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.warn(`Gemini image error [${response.status}]:`, errorText);
+      return null;
     }
 
     const data = await response.json();
-
-    // Extract image from response
-    const candidates = data.candidates || [];
-    let imageUrl: string | null = null;
-
-    for (const candidate of candidates) {
-      const parts = candidate.content?.parts || [];
-      for (const part of parts) {
+    for (const candidate of data.candidates || []) {
+      for (const part of candidate.content?.parts || []) {
         if (part.inlineData) {
           const mimeType = part.inlineData.mimeType || "image/png";
-          imageUrl = `data:${mimeType};base64,${part.inlineData.data}`;
-          break;
+          console.log("Image generated via Gemini");
+          return `data:${mimeType};base64,${part.inlineData.data}`;
         }
       }
-      if (imageUrl) break;
     }
-
-    if (!imageUrl) {
-      console.error("No image in Google AI response:", JSON.stringify(data).slice(0, 500));
-      return new Response(JSON.stringify({ error: "Nenhuma imagem retornada" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ imageUrl }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return null;
   } catch (e) {
-    console.error("generate-image-google error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.warn("Gemini image failed:", e);
+    return null;
   }
-});
+}
