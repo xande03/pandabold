@@ -46,6 +46,8 @@ const IMAGE_MODELS = [
   { id: "glm-image", name: "GLM-Image (Z.ai)", tier: "Econômico", provider: "zai" },
   { id: "google/gemini-3.1-flash-image-preview", name: "Gemini 3.1 Flash Image", tier: "Rápido", provider: "lovable" },
   { id: "google/gemini-3-pro-image-preview", name: "Gemini 3 Pro Image", tier: "Pro", provider: "lovable" },
+  { id: "black-forest-labs/flux.2-pro", name: "FLUX.2 Pro", tier: "Premium", provider: "openrouter" },
+  { id: "bytedance-seed/seedream-4.5", name: "Seedream 4.5", tier: "Premium", provider: "openrouter" },
 ];
 
 const SIZES = [
@@ -111,6 +113,7 @@ export function ImageLab() {
 
       const selectedModel = IMAGE_MODELS.find((m) => m.id === model);
       const isZai = selectedModel?.provider === "zai";
+      const isOpenRouter = selectedModel?.provider === "openrouter";
 
       const creationModelData = selectedCreationModel
         ? CREATION_MODELS.find((m) => m.id === selectedCreationModel)
@@ -120,22 +123,33 @@ export function ImageLab() {
       // When a reference image is provided, always use Lovable AI (Gemini) which supports image input.
       const useZai = isZai && !referenceImage;
 
-      const { data, error } = await supabase.functions.invoke(
-        useZai ? "generate-image-zai" : "generate-image",
-        {
-          body: useZai
-            ? {
-                prompt: finalPrompt,
-                size,
-                creationMode: creationModelData?.name || undefined,
-              }
-            : {
-                prompt: finalPrompt,
-                referenceImage: referenceImage || undefined,
-                model: isZai ? "google/gemini-3.1-flash-image-preview" : model,
-              },
-        }
-      );
+      let functionName: string;
+      let body: any;
+
+      if (isOpenRouter) {
+        functionName = "generate-image-openrouter";
+        body = {
+          prompt: finalPrompt,
+          model: model,
+          referenceImage: referenceImage || undefined,
+        };
+      } else if (useZai) {
+        functionName = "generate-image-zai";
+        body = {
+          prompt: finalPrompt,
+          size,
+          creationMode: creationModelData?.name || undefined,
+        };
+      } else {
+        functionName = "generate-image";
+        body = {
+          prompt: finalPrompt,
+          referenceImage: referenceImage || undefined,
+          model: isZai ? "google/gemini-3.1-flash-image-preview" : model,
+        };
+      }
+
+      const { data, error } = await supabase.functions.invoke(functionName, { body });
 
       if (error) throw error;
       if (data?.error) {
