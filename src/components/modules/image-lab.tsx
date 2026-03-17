@@ -120,7 +120,7 @@ export function ImageLab() {
         : null;
 
       // Z.ai image API doesn't support reference images natively.
-      // When a reference image is provided, always use Lovable AI (Gemini) which supports image input.
+      // When a reference image is provided, use Gemini which supports image input.
       const useZai = isZai && !referenceImage;
 
       let functionName: string;
