@@ -85,13 +85,13 @@ function getProviderConfig(provider: string, model?: string): ProviderConfig {
     };
   }
 
-  // Default: Lovable AI
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
-  if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
+  // Default: Z.ai
+  const apiKey = Deno.env.get("ZAI_API_KEY");
+  if (!apiKey) throw new Error("ZAI_API_KEY não configurada");
   return {
-    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    url: "https://api.z.ai/api/paas/v4/chat/completions",
     apiKey,
-    model: model || "google/gemini-2.5-flash-lite",
+    model: model || "glm-5",
   };
 }
 
@@ -102,7 +102,7 @@ serve(async (req) => {
     const { text, type, provider, model } = await req.json();
     if (!text) throw new Error("Texto não fornecido");
 
-    const config = getProviderConfig(provider || "lovable", model);
+    const config = getProviderConfig(provider || "zai", model);
 
     let inputText = text;
     if (text.startsWith("__PDF_BASE64__")) {
