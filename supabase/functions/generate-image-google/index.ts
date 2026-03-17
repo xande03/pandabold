@@ -5,11 +5,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Models that use the "predict" API (Imagen)
+const IMAGEN_MODELS = [
+  "imagen-4.0-generate-001",
+  "imagen-4.0-ultra-generate-001",
+  "imagen-4.0-fast-generate-001",
+];
+
+// Models that use generateContent with image modality (Nano Banana)
+const GEMINI_IMAGE_MODELS = [
+  "gemini-2.5-flash-image",
+  "gemini-3-pro-image-preview",
+  "gemini-3.1-flash-image-preview",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, referenceImage } = await req.json();
+    const { prompt, referenceImage, model } = await req.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Prompt é obrigatório" }), {
@@ -20,24 +34,26 @@ serve(async (req) => {
     const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
     if (!apiKey) throw new Error("GOOGLE_AI_API_KEY is not configured");
 
-    // Try Imagen 3 first (dedicated image generation model)
-    const imagenResult = await generateWithImagen(apiKey, prompt);
-    if (imagenResult) {
-      return new Response(JSON.stringify({ imageUrl: imagenResult }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const selectedModel = model || "imagen-4.0-fast-generate-001";
+    let imageUrl: string | null = null;
+
+    if (IMAGEN_MODELS.includes(selectedModel)) {
+      imageUrl = await generateWithImagen(apiKey, selectedModel, prompt);
+    } else if (GEMINI_IMAGE_MODELS.includes(selectedModel)) {
+      imageUrl = await generateWithGemini(apiKey, selectedModel, prompt, referenceImage);
+    } else {
+      // Default fallback to Imagen 4 Fast
+      imageUrl = await generateWithImagen(apiKey, "imagen-4.0-fast-generate-001", prompt);
+    }
+
+    if (!imageUrl) {
+      return new Response(JSON.stringify({ error: "Nenhuma imagem retornada" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Fallback: try Gemini with image generation capability
-    const geminiResult = await generateWithGemini(apiKey, prompt, referenceImage);
-    if (geminiResult) {
-      return new Response(JSON.stringify({ imageUrl: geminiResult }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ error: "Nenhuma imagem retornada" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ imageUrl }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("generate-image-google error:", e);
@@ -47,11 +63,11 @@ serve(async (req) => {
   }
 });
 
-async function generateWithImagen(apiKey: string, prompt: string): Promise<string | null> {
+async function generateWithImagen(apiKey: string, model: string, prompt: string): Promise<string | null> {
   try {
-    console.log("Trying Imagen 3...");
+    console.log(`Generating with ${model}...`);
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,7 +75,6 @@ async function generateWithImagen(apiKey: string, prompt: string): Promise<strin
           instances: [{ prompt }],
           parameters: {
             sampleCount: 1,
-            aspectRatio: "1:1",
           },
         }),
       }
@@ -67,28 +82,28 @@ async function generateWithImagen(apiKey: string, prompt: string): Promise<strin
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn(`Imagen 3 error [${response.status}]:`, errorText);
+      console.error(`${model} error [${response.status}]:`, errorText);
       return null;
     }
 
     const data = await response.json();
     const imageBytes = data.predictions?.[0]?.bytesBase64Encoded;
     if (imageBytes) {
-      console.log("Image generated via Imagen 3");
+      console.log(`Image generated via ${model}`);
       return `data:image/png;base64,${imageBytes}`;
     }
     return null;
   } catch (e) {
-    console.warn("Imagen 3 failed:", e);
+    console.error(`${model} failed:`, e);
     return null;
   }
 }
 
-async function generateWithGemini(apiKey: string, prompt: string, referenceImage?: string): Promise<string | null> {
+async function generateWithGemini(apiKey: string, model: string, prompt: string, referenceImage?: string): Promise<string | null> {
   try {
-    console.log("Trying Gemini image generation...");
+    console.log(`Generating with ${model}...`);
     const parts: any[] = [{ text: prompt }];
-    
+
     if (referenceImage) {
       const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
@@ -98,9 +113,8 @@ async function generateWithGemini(apiKey: string, prompt: string, referenceImage
       }
     }
 
-    // Use gemini-2.0-flash-preview-image-generation which supports image output
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -115,7 +129,7 @@ async function generateWithGemini(apiKey: string, prompt: string, referenceImage
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn(`Gemini image error [${response.status}]:`, errorText);
+      console.error(`${model} error [${response.status}]:`, errorText);
       return null;
     }
 
@@ -124,14 +138,14 @@ async function generateWithGemini(apiKey: string, prompt: string, referenceImage
       for (const part of candidate.content?.parts || []) {
         if (part.inlineData) {
           const mimeType = part.inlineData.mimeType || "image/png";
-          console.log("Image generated via Gemini");
+          console.log(`Image generated via ${model}`);
           return `data:${mimeType};base64,${part.inlineData.data}`;
         }
       }
     }
     return null;
   } catch (e) {
-    console.warn("Gemini image failed:", e);
+    console.error(`${model} failed:`, e);
     return null;
   }
 }
