@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.generate-image-zai]
 verify_jwt = false
+
+[functions.generate-image-openrouter]
+verify_jwt = false
