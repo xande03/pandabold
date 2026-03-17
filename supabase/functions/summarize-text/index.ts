@@ -102,7 +102,7 @@ serve(async (req) => {
     const { text, type, provider, model } = await req.json();
     if (!text) throw new Error("Texto não fornecido");
 
-    const config = getProviderConfig(provider || "lovable", model);
+    const config = getProviderConfig(provider || "zai", model);
 
     let inputText = text;
     if (text.startsWith("__PDF_BASE64__")) {

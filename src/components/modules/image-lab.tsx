@@ -44,8 +44,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const IMAGE_MODELS = [
   { id: "glm-image", name: "GLM-Image (Z.ai)", tier: "Econômico", provider: "zai" },
-  { id: "google/gemini-3.1-flash-image-preview", name: "Gemini 3.1 Flash Image", tier: "Rápido", provider: "lovable" },
-  { id: "google/gemini-3-pro-image-preview", name: "Gemini 3 Pro Image", tier: "Pro", provider: "lovable" },
+  { id: "google/gemini-3.1-flash-image-preview", name: "Gemini 3.1 Flash Image", tier: "Rápido", provider: "gemini" },
+  { id: "google/gemini-3-pro-image-preview", name: "Gemini 3 Pro Image", tier: "Pro", provider: "gemini" },
   { id: "black-forest-labs/flux.2-pro", name: "FLUX.2 Pro", tier: "Premium", provider: "openrouter" },
   { id: "bytedance-seed/seedream-4.5", name: "Seedream 4.5", tier: "Premium", provider: "openrouter" },
 ];
