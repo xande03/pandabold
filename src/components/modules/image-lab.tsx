@@ -115,6 +115,7 @@ export function ImageLab() {
       const selectedModel = IMAGE_MODELS.find((m) => m.id === model);
       const isZai = selectedModel?.provider === "zai";
       const isOpenRouter = selectedModel?.provider === "openrouter";
+      const isGoogle = selectedModel?.provider === "google";
 
       const creationModelData = selectedCreationModel
         ? CREATION_MODELS.find((m) => m.id === selectedCreationModel)
@@ -127,7 +128,13 @@ export function ImageLab() {
       let functionName: string;
       let body: any;
 
-      if (isOpenRouter) {
+      if (isGoogle) {
+        functionName = "generate-image-google";
+        body = {
+          prompt: finalPrompt,
+          referenceImage: referenceImage || undefined,
+        };
+      } else if (isOpenRouter) {
         functionName = "generate-image-openrouter";
         body = {
           prompt: finalPrompt,
