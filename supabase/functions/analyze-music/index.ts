@@ -10,21 +10,22 @@ serve(async (req) => {
 
   try {
     const { songInfo, youtubeUrl } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const ZAI_API_KEY = Deno.env.get("ZAI_API_KEY");
+    if (!ZAI_API_KEY) throw new Error("ZAI_API_KEY is not configured");
 
     const prompt = youtubeUrl
       ? `Analise a música do YouTube: ${youtubeUrl}. ${songInfo || ""}`
       : `Analise a seguinte música: ${songInfo}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.z.ai/api/paas/v4/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${ZAI_API_KEY}`,
         "Content-Type": "application/json",
+        "Accept-Language": "en-US,en",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "glm-5",
         messages: [
           {
             role: "system",
@@ -73,10 +74,8 @@ Identifique com precisão: artista, nome da música, álbum, tonalidade (key mus
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
     
-    // Try to parse JSON from the response
     let analysis;
     try {
-      // Remove potential markdown code blocks
       const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       analysis = JSON.parse(cleaned);
     } catch {

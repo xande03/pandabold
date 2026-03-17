@@ -10,17 +10,18 @@ serve(async (req) => {
 
   try {
     const { messages, model } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const ZAI_API_KEY = Deno.env.get("ZAI_API_KEY");
+    if (!ZAI_API_KEY) throw new Error("ZAI_API_KEY is not configured");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.z.ai/api/paas/v4/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${ZAI_API_KEY}`,
         "Content-Type": "application/json",
+        "Accept-Language": "en-US,en",
       },
       body: JSON.stringify({
-        model: model || "google/gemini-3-flash-preview",
+        model: model || "glm-5",
         messages: [
           { role: "system", content: "Você é um assistente de IA útil e inteligente. Responda de forma clara e concisa. Se o usuário falar em português, responda em português." },
           ...messages,
@@ -36,13 +37,13 @@ serve(async (req) => {
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao seu workspace." }), {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Erro no gateway de IA" }), {
+      console.error("Z.ai chat error:", response.status, t);
+      return new Response(JSON.stringify({ error: "Erro na API Z.ai" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
