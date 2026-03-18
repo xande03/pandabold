@@ -128,16 +128,18 @@ export function ImageLab() {
       }
 
       if (data?.imageUrl) {
+        const usedModel = data.model || model;
         addGeneratedImage({
           id: crypto.randomUUID(),
           prompt: finalPrompt,
           url: data.imageUrl,
-          model,
+          model: usedModel,
           size,
           creationModel: selectedCreationModel || undefined,
           timestamp: Date.now(),
         });
-        toast.success("Imagem gerada com sucesso!");
+        const modelLabel = IMAGE_MODELS.find(m => m.id === usedModel)?.name || usedModel;
+        toast.success(`Imagem gerada via ${modelLabel}!`);
       } else {
         toast.error("Nenhuma imagem retornada");
       }
@@ -349,11 +351,14 @@ export function ImageLab() {
                       </Button>
                     </div>
                   </div>
-                  {img.creationModel && (
-                    <div className="absolute top-1 left-1">
+                  <div className="absolute top-1 left-1 flex flex-col gap-0.5">
+                    {img.creationModel && (
                       <Badge variant="secondary" className="text-[9px]">{CREATION_MODELS.find((m) => m.id === img.creationModel)?.name}</Badge>
-                    </div>
-                  )}
+                    )}
+                    <Badge variant="outline" className="text-[8px] bg-background/80 backdrop-blur-sm">
+                      {IMAGE_MODELS.find((m) => m.id === img.model)?.name || img.model.replace("gemini-", "G")}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>

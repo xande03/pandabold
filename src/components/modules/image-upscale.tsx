@@ -96,15 +96,18 @@ export function ImageUpscale() {
       if (!data?.imageUrl) throw new Error("Nenhuma imagem retornada");
 
       setResultUrl(data.imageUrl);
+      const usedModel = data.model || "gemini-3.1-flash-image-preview";
       addUpscaledImage({
         id: crypto.randomUUID(),
         originalUrl: imageUrl,
         upscaledUrl: data.imageUrl,
         scale,
         description: desc,
+        usedModel,
         timestamp: Date.now(),
       });
-      toast.success("Upscale concluído!");
+      const modelName = usedModel.replace("gemini-", "Gemini ");
+      toast.success(`Upscale concluído via ${modelName}!`);
     } catch (err: any) {
       console.error("Upscale error:", err);
       toast.error(err.message || "Erro ao processar upscale");

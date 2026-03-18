@@ -27,6 +27,7 @@ export interface EditedImage {
   editedUrl: string;
   operation: string;
   prompt: string;
+  usedModel?: string;
   timestamp: number;
 }
 
@@ -45,6 +46,7 @@ export interface UpscaledImage {
   upscaledUrl: string;
   scale: string;
   description: string;
+  usedModel?: string;
   timestamp: number;
 }
 

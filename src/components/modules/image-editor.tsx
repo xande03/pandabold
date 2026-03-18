@@ -132,9 +132,11 @@ export function ImageEditor() {
           editedUrl: data.imageUrl,
           operation,
           prompt,
+          usedModel: data.model || "gemini-3.1-flash-image-preview",
           timestamp: Date.now(),
         });
-        toast.success("Edição aplicada!");
+        const modelName = (data.model || "gemini-3.1-flash-image-preview").replace("gemini-", "Gemini ");
+        toast.success(`Edição aplicada via ${modelName}!`);
       }
     } catch (error: any) {
       toast.error(error.message || "Falha na edição");
@@ -316,8 +318,9 @@ export function ImageEditor() {
               {editedImages.map((img) => (
                 <div key={img.id} className="relative group rounded-lg overflow-hidden border border-border cursor-pointer" onClick={() => setCompareDialog({ original: img.originalUrl, edited: img.editedUrl })}>
                   <img src={img.editedUrl} alt={img.prompt} className="w-full aspect-square object-cover" />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 p-2">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 p-2 flex gap-1">
                     <Badge variant="outline" className="text-[10px]">{EDIT_OPERATIONS.find((o) => o.id === img.operation)?.name || img.operation}</Badge>
+                    {img.usedModel && <Badge variant="secondary" className="text-[8px]">{img.usedModel.replace("gemini-", "G")}</Badge>}
                   </div>
                 </div>
               ))}
