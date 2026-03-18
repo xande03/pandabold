@@ -43,9 +43,12 @@ import { GenerationLoading } from "@/components/ui/generation-loading";
 import { supabase } from "@/integrations/supabase/client";
 
 const IMAGE_MODELS = [
-  { id: "google/gemini-3.1-flash-image-preview", name: "Nano Banana 2 (Rápido)", tier: "Rápido", provider: "lovable" },
-  { id: "google/gemini-2.5-flash-image", name: "Nano Banana (Econômico)", tier: "Econômico", provider: "lovable" },
-  { id: "google/gemini-3-pro-image-preview", name: "Nano Banana Pro (Qualidade)", tier: "Pro", provider: "lovable" },
+  { id: "gemini-3.1-flash-image-preview", name: "Gemini 3.1 Flash (Rápido)", tier: "Rápido", provider: "google" },
+  { id: "gemini-3-pro-image-preview", name: "Gemini 3 Pro (Qualidade)", tier: "Pro", provider: "google" },
+  { id: "gemini-2.5-flash-image", name: "Gemini 2.5 Flash (Econômico)", tier: "Econômico", provider: "google" },
+  { id: "imagen-4.0-fast-generate-001", name: "Imagen 4 Fast (Premium)", tier: "Premium", provider: "google" },
+  { id: "imagen-4.0-generate-001", name: "Imagen 4 (Premium)", tier: "Premium", provider: "google" },
+  { id: "imagen-4.0-ultra-generate-001", name: "Imagen 4 Ultra (Premium)", tier: "Ultra", provider: "google" },
 ];
 
 const SIZES = [

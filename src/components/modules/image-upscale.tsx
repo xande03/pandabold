@@ -89,7 +89,7 @@ export function ImageUpscale() {
 
     try {
       const { data, error } = await supabase.functions.invoke("edit-image", {
-        body: { imageUrl, instruction, model: "google/gemini-3.1-flash-image-preview" },
+        body: { imageUrl, instruction, model: "gemini-3.1-flash-image-preview" },
       });
 
       if (error) throw error;

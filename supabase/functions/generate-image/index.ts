@@ -5,26 +5,88 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const FALLBACK_MODELS = [
-  "google/gemini-3.1-flash-image-preview",
-  "google/gemini-3-pro-image-preview",
-  "google/gemini-2.5-flash-image",
+const GEMINI_MODELS = [
+  "gemini-3.1-flash-image-preview",
+  "gemini-3-pro-image-preview",
+  "gemini-2.5-flash-image",
 ];
 
-async function callGateway(apiKey: string, model: string, content: any[]) {
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content }],
-      modalities: ["image", "text"],
-    }),
-  });
-  return response;
+const IMAGEN_MODELS = [
+  "imagen-4.0-fast-generate-001",
+  "imagen-4.0-generate-001",
+  "imagen-4.0-ultra-generate-001",
+];
+
+async function generateWithGemini(
+  apiKey: string,
+  model: string,
+  prompt: string,
+  referenceImage?: string
+): Promise<string | null> {
+  const parts: any[] = [{ text: prompt }];
+  if (referenceImage) {
+    const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+    }
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const t = await response.text();
+    console.error(`${model} error [${response.status}]:`, t);
+    return null;
+  }
+
+  const data = await response.json();
+  for (const candidate of data.candidates || []) {
+    for (const part of candidate.content?.parts || []) {
+      if (part.inlineData) {
+        const mime = part.inlineData.mimeType || "image/png";
+        return `data:${mime};base64,${part.inlineData.data}`;
+      }
+    }
+  }
+  return null;
+}
+
+async function generateWithImagen(
+  apiKey: string,
+  model: string,
+  prompt: string
+): Promise<string | null> {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        instances: [{ prompt }],
+        parameters: { sampleCount: 1 },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const t = await response.text();
+    console.error(`${model} error [${response.status}]:`, t);
+    return null;
+  }
+
+  const data = await response.json();
+  const bytes = data.predictions?.[0]?.bytesBase64Encoded;
+  return bytes ? `data:image/png;base64,${bytes}` : null;
 }
 
 serve(async (req) => {
@@ -32,8 +94,8 @@ serve(async (req) => {
 
   try {
     const { prompt, referenceImage, model } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
+    if (!apiKey) throw new Error("GOOGLE_AI_API_KEY is not configured");
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: "Prompt é obrigatório" }), {
@@ -41,46 +103,42 @@ serve(async (req) => {
       });
     }
 
-    const content: any[] = [{ type: "text", text: prompt }];
-    if (referenceImage) {
-      content.push({ type: "image_url", image_url: { url: referenceImage } });
+    const selectedModel = model || "gemini-3.1-flash-image-preview";
+    const isImagen = IMAGEN_MODELS.includes(selectedModel);
+
+    // Build fallback chain: requested model first, then others of same type, then cross-type
+    let modelsToTry: string[];
+    if (isImagen) {
+      modelsToTry = [selectedModel, ...IMAGEN_MODELS.filter(m => m !== selectedModel), ...GEMINI_MODELS];
+    } else {
+      modelsToTry = [selectedModel, ...GEMINI_MODELS.filter(m => m !== selectedModel)];
     }
 
-    // Build ordered model list: requested model first, then fallbacks
-    const requestedModel = model || "google/gemini-3.1-flash-image-preview";
-    const modelsToTry = [requestedModel, ...FALLBACK_MODELS.filter(m => m !== requestedModel)];
+    // If reference image provided, skip Imagen (doesn't support image input)
+    if (referenceImage) {
+      modelsToTry = modelsToTry.filter(m => !IMAGEN_MODELS.includes(m));
+    }
 
     for (const tryModel of modelsToTry) {
-      console.log(`Trying model: ${tryModel}`);
-      const response = await callGateway(LOVABLE_API_KEY, tryModel, content);
+      console.log(`Trying: ${tryModel}`);
+      let imageUrl: string | null;
 
-      if (response.status === 429) {
-        console.warn(`Rate limited on ${tryModel}, trying next...`);
-        continue;
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Recarregue em Settings → Workspace → Usage." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (!response.ok) {
-        const t = await response.text();
-        console.error(`${tryModel} error [${response.status}]:`, t);
-        continue;
+      if (IMAGEN_MODELS.includes(tryModel)) {
+        imageUrl = await generateWithImagen(apiKey, tryModel, prompt);
+      } else {
+        imageUrl = await generateWithGemini(apiKey, tryModel, prompt, referenceImage);
       }
 
-      const data = await response.json();
-      const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
       if (imageUrl) {
-        console.log(`Image generated via ${tryModel}`);
+        console.log(`Generated via ${tryModel}`);
         return new Response(JSON.stringify({ imageUrl, model: tryModel }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      console.warn(`No image returned from ${tryModel}, trying next...`);
+      console.warn(`${tryModel} returned no image, trying next...`);
     }
 
-    return new Response(JSON.stringify({ error: "Nenhum modelo disponível conseguiu gerar a imagem. Tente novamente." }), {
+    return new Response(JSON.stringify({ error: "Nenhum modelo conseguiu gerar a imagem. Verifique o billing do Google AI Studio." }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
