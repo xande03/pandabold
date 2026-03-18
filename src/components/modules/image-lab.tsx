@@ -43,17 +43,9 @@ import { GenerationLoading } from "@/components/ui/generation-loading";
 import { supabase } from "@/integrations/supabase/client";
 
 const IMAGE_MODELS = [
-  { id: "glm-image", name: "GLM-Image (Z.ai)", tier: "Econômico", provider: "zai" },
-  { id: "google/gemini-3.1-flash-image-preview", name: "Gemini 3.1 Flash Image", tier: "Rápido", provider: "gemini" },
-  { id: "google/gemini-3-pro-image-preview", name: "Gemini 3 Pro Image", tier: "Pro", provider: "gemini" },
-  { id: "gemini-2.5-flash-image", name: "Nano Banana (Google AI)", tier: "Rápido", provider: "google" },
-  { id: "gemini-3-pro-image-preview", name: "Nano Banana Pro (Google AI)", tier: "Pro", provider: "google" },
-  { id: "gemini-3.1-flash-image-preview", name: "Nano Banana 2 (Google AI)", tier: "Pro", provider: "google" },
-  { id: "imagen-4.0-fast-generate-001", name: "Imagen 4 Fast (Google AI)", tier: "Premium", provider: "google" },
-  { id: "imagen-4.0-generate-001", name: "Imagen 4 (Google AI)", tier: "Premium", provider: "google" },
-  { id: "imagen-4.0-ultra-generate-001", name: "Imagen 4 Ultra (Google AI)", tier: "Premium", provider: "google" },
-  { id: "black-forest-labs/flux.2-pro", name: "FLUX.2 Pro", tier: "Premium", provider: "openrouter" },
-  { id: "bytedance-seed/seedream-4.5", name: "Seedream 4.5", tier: "Premium", provider: "openrouter" },
+  { id: "google/gemini-3.1-flash-image-preview", name: "Nano Banana 2 (Rápido)", tier: "Rápido", provider: "lovable" },
+  { id: "google/gemini-2.5-flash-image", name: "Nano Banana (Econômico)", tier: "Econômico", provider: "lovable" },
+  { id: "google/gemini-3-pro-image-preview", name: "Nano Banana Pro (Qualidade)", tier: "Pro", provider: "lovable" },
 ];
 
 const SIZES = [
