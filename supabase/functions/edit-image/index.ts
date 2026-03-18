@@ -6,25 +6,65 @@ const corsHeaders = {
 };
 
 const FALLBACK_MODELS = [
-  "google/gemini-3.1-flash-image-preview",
-  "google/gemini-3-pro-image-preview",
-  "google/gemini-2.5-flash-image",
+  "gemini-3.1-flash-image-preview",
+  "gemini-3-pro-image-preview",
+  "gemini-2.5-flash-image",
 ];
 
-async function callGateway(apiKey: string, model: string, content: any[]) {
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content }],
-      modalities: ["image", "text"],
-    }),
-  });
-  return response;
+async function editWithGemini(
+  apiKey: string,
+  model: string,
+  instruction: string,
+  imageUrl: string
+): Promise<string | null> {
+  const parts: any[] = [{ text: instruction }];
+
+  // Handle base64 image
+  const match = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (match) {
+    parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+  } else {
+    // For URL images, fetch and convert to base64
+    try {
+      const imgResp = await fetch(imageUrl);
+      const buf = await imgResp.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const contentType = imgResp.headers.get("content-type") || "image/png";
+      parts.push({ inlineData: { mimeType: contentType, data: base64 } });
+    } catch (e) {
+      console.error("Failed to fetch image URL:", e);
+      return null;
+    }
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const t = await response.text();
+    console.error(`${model} error [${response.status}]:`, t);
+    return null;
+  }
+
+  const data = await response.json();
+  for (const candidate of data.candidates || []) {
+    for (const part of candidate.content?.parts || []) {
+      if (part.inlineData) {
+        const mime = part.inlineData.mimeType || "image/png";
+        return `data:${mime};base64,${part.inlineData.data}`;
+      }
+    }
+  }
+  return null;
 }
 
 serve(async (req) => {
@@ -32,8 +72,8 @@ serve(async (req) => {
 
   try {
     const { imageUrl, instruction, model } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
+    if (!apiKey) throw new Error("GOOGLE_AI_API_KEY is not configured");
 
     if (!imageUrl || !instruction) {
       return new Response(JSON.stringify({ error: "Imagem e instrução são obrigatórios" }), {
@@ -41,47 +81,24 @@ serve(async (req) => {
       });
     }
 
-    const content = [
-      { type: "text", text: instruction },
-      { type: "image_url", image_url: { url: imageUrl } },
-    ];
-
-    const requestedModel = model || "google/gemini-3.1-flash-image-preview";
-    const modelsToTry = [requestedModel, ...FALLBACK_MODELS.filter(m => m !== requestedModel)];
+    // Strip "google/" prefix if present (from old Lovable AI model IDs)
+    const cleanModel = (model || "").replace("google/", "") || "gemini-3.1-flash-image-preview";
+    const modelsToTry = [cleanModel, ...FALLBACK_MODELS.filter(m => m !== cleanModel)];
 
     for (const tryModel of modelsToTry) {
       console.log(`Trying edit with: ${tryModel}`);
-      const response = await callGateway(LOVABLE_API_KEY, tryModel, content);
+      const result = await editWithGemini(apiKey, tryModel, instruction, imageUrl);
 
-      if (response.status === 429) {
-        console.warn(`Rate limited on ${tryModel}, trying next...`);
-        continue;
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Recarregue em Settings → Workspace → Usage." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (!response.ok) {
-        const t = await response.text();
-        console.error(`${tryModel} error [${response.status}]:`, t);
-        continue;
-      }
-
-      const data = await response.json();
-      const editedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-      const text = data.choices?.[0]?.message?.content;
-
-      if (editedImageUrl) {
-        console.log(`Image edited via ${tryModel}`);
-        return new Response(JSON.stringify({ imageUrl: editedImageUrl, text, model: tryModel }), {
+      if (result) {
+        console.log(`Edited via ${tryModel}`);
+        return new Response(JSON.stringify({ imageUrl: result, model: tryModel }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      console.warn(`No image returned from ${tryModel}, trying next...`);
+      console.warn(`${tryModel} returned no image, trying next...`);
     }
 
-    return new Response(JSON.stringify({ error: "Nenhum modelo disponível conseguiu editar a imagem. Tente novamente." }), {
+    return new Response(JSON.stringify({ error: "Nenhum modelo conseguiu editar a imagem. Verifique o billing do Google AI Studio." }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

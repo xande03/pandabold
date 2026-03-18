@@ -118,7 +118,7 @@ export function ImageEditor() {
         body: {
           imageUrl: uploadedImage,
           instruction,
-          model: "google/gemini-3.1-flash-image-preview",
+          model: "gemini-3.1-flash-image-preview",
         },
       });
 
