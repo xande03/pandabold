@@ -46,6 +46,7 @@ export interface UpscaledImage {
   upscaledUrl: string;
   scale: string;
   description: string;
+  usedModel?: string;
   timestamp: number;
 }
 
