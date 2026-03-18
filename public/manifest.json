@@ -4,8 +4,8 @@
   "description": "Plataforma de IA Multimodal",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#ea580c",
+  "background_color": "#06120e",
+  "theme_color": "#10b981",
   "icons": [
     {
       "src": "/panda-icon-192.png",
