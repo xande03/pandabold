@@ -109,50 +109,12 @@ export function ImageLab() {
         finalPrompt = "Crie um avatar estilizado do rosto da pessoa nesta imagem, com estilo artístico digital, cores vibrantes e detalhes profissionais. Foque apenas no rosto.";
       }
 
-      const selectedModel = IMAGE_MODELS.find((m) => m.id === model);
-      const isZai = selectedModel?.provider === "zai";
-      const isOpenRouter = selectedModel?.provider === "openrouter";
-      const isGoogle = selectedModel?.provider === "google";
-
-      const creationModelData = selectedCreationModel
-        ? CREATION_MODELS.find((m) => m.id === selectedCreationModel)
-        : null;
-
-      // Z.ai image API doesn't support reference images natively.
-      // When a reference image is provided, use Gemini which supports image input.
-      const useZai = isZai && !referenceImage;
-
-      let functionName: string;
-      let body: any;
-
-      if (isGoogle) {
-        functionName = "generate-image-google";
-        body = {
-          prompt: finalPrompt,
-          referenceImage: referenceImage || undefined,
-        };
-      } else if (isOpenRouter) {
-        functionName = "generate-image-openrouter";
-        body = {
-          prompt: finalPrompt,
-          model: model,
-          referenceImage: referenceImage || undefined,
-        };
-      } else if (useZai) {
-        functionName = "generate-image-zai";
-        body = {
-          prompt: finalPrompt,
-          size,
-          creationMode: creationModelData?.name || undefined,
-        };
-      } else {
-        functionName = "generate-image";
-        body = {
-          prompt: finalPrompt,
-          referenceImage: referenceImage || undefined,
-          model: isZai ? "google/gemini-3.1-flash-image-preview" : model,
-        };
-      }
+      const functionName = "generate-image";
+      const body = {
+        prompt: finalPrompt,
+        referenceImage: referenceImage || undefined,
+        model,
+      };
 
       const { data, error } = await supabase.functions.invoke(functionName, { body });
 
