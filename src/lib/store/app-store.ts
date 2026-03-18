@@ -27,6 +27,7 @@ export interface EditedImage {
   editedUrl: string;
   operation: string;
   prompt: string;
+  usedModel?: string;
   timestamp: number;
 }
 
