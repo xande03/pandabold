@@ -128,16 +128,18 @@ export function ImageLab() {
       }
 
       if (data?.imageUrl) {
+        const usedModel = data.model || model;
         addGeneratedImage({
           id: crypto.randomUUID(),
           prompt: finalPrompt,
           url: data.imageUrl,
-          model,
+          model: usedModel,
           size,
           creationModel: selectedCreationModel || undefined,
           timestamp: Date.now(),
         });
-        toast.success("Imagem gerada com sucesso!");
+        const modelLabel = IMAGE_MODELS.find(m => m.id === usedModel)?.name || usedModel;
+        toast.success(`Imagem gerada via ${modelLabel}!`);
       } else {
         toast.error("Nenhuma imagem retornada");
       }
