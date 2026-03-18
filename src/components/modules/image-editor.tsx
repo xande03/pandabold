@@ -132,9 +132,11 @@ export function ImageEditor() {
           editedUrl: data.imageUrl,
           operation,
           prompt,
+          usedModel: data.model || "gemini-3.1-flash-image-preview",
           timestamp: Date.now(),
         });
-        toast.success("Edição aplicada!");
+        const modelName = (data.model || "gemini-3.1-flash-image-preview").replace("gemini-", "Gemini ");
+        toast.success(`Edição aplicada via ${modelName}!`);
       }
     } catch (error: any) {
       toast.error(error.message || "Falha na edição");
