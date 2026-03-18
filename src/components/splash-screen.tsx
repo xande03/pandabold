@@ -13,7 +13,7 @@ export function SplashScreen({ show }: SplashScreenProps) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.05 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[hsl(222,47%,8%)]"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[hsl(160,50%,4%)]"
         >
           {/* Ambient glow layers */}
           <div className="absolute inset-0 overflow-hidden">
@@ -22,14 +22,14 @@ export function SplashScreen({ show }: SplashScreenProps) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.2, ease: "easeOut" }}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full"
-              style={{ background: "radial-gradient(circle, hsl(24,94%,53%,0.12) 0%, transparent 70%)" }}
+              style={{ background: "radial-gradient(circle, hsl(153,100%,50%,0.12) 0%, transparent 70%)" }}
             />
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.6 }}
               transition={{ duration: 2, delay: 0.3 }}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"
-              style={{ background: "radial-gradient(circle, hsl(0,84%,60%,0.06) 0%, transparent 60%)" }}
+              style={{ background: "radial-gradient(circle, hsl(162,100%,40%,0.06) 0%, transparent 60%)" }}
             />
           </div>
 
@@ -53,13 +53,13 @@ export function SplashScreen({ show }: SplashScreenProps) {
                 animate={{ opacity: [0, 0.5, 0], scale: [0.8, 1.4, 1.6] }}
                 transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                 className="absolute inset-0 rounded-2xl"
-                style={{ background: "linear-gradient(135deg, hsl(24,94%,53%), hsl(0,84%,60%))" }}
+                style={{ background: "linear-gradient(135deg, hsl(153,100%,50%), hsl(162,100%,40%))" }}
               />
               <div
                 className="relative flex h-20 w-20 items-center justify-center rounded-2xl shadow-2xl"
                 style={{
-                  background: "linear-gradient(135deg, hsl(24,94%,53%), hsl(0,84%,60%))",
-                  boxShadow: "0 0 60px hsl(24 94% 53% / 0.5), 0 0 120px hsl(0 84% 60% / 0.2)",
+                    background: "linear-gradient(135deg, hsl(153,100%,50%), hsl(162,100%,40%))",
+                  boxShadow: "0 0 60px hsl(153 100% 50% / 0.5), 0 0 120px hsl(162 100% 40% / 0.2)",
                 }}
               >
                 <span className="text-4xl">🐼</span>
@@ -78,7 +78,7 @@ export function SplashScreen({ show }: SplashScreenProps) {
                 style={{
                   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
                   fontWeight: 900,
-                  background: "linear-gradient(135deg, hsl(24,94%,53%) 0%, hsl(0,84%,60%) 50%, hsl(24,94%,53%) 100%)",
+                   background: "linear-gradient(135deg, hsl(153,100%,50%) 0%, hsl(162,100%,40%) 50%, hsl(153,100%,50%) 100%)",
                   backgroundSize: "200% auto",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
@@ -111,7 +111,7 @@ export function SplashScreen({ show }: SplashScreenProps) {
                 transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
                 className="h-full w-1/2 rounded-full"
                 style={{
-                  background: "linear-gradient(90deg, transparent, hsl(24,94%,53%), hsl(0,84%,60%), transparent)",
+                  background: "linear-gradient(90deg, transparent, hsl(153,100%,50%), hsl(162,100%,40%), transparent)",
                 }}
               />
             </motion.div>
